@@ -2,11 +2,13 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { createHash } from "node:crypto";
 
-// Spec: generation 10 per 10 minutes per IP. Agreed in Phase 0: redo and rewrite 30 per 10 minutes, publish 20 per hour.
+// Spec: generation 10 per 10 minutes per IP. Agreed in Phase 0: redo and rewrite 30 per 10 minutes, publish 20 per hour,
+// interest taps 30 per minute.
 const WINDOWS = {
   generate: { tokens: 10, window: "10 m" },
   regenerate: { tokens: 30, window: "10 m" },
   publish: { tokens: 20, window: "1 h" },
+  tap: { tokens: 30, window: "1 m" },
 } as const;
 export type LimitKind = keyof typeof WINDOWS;
 

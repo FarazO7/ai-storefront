@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { HeaderSheet, ProductSheet, PublishedSheet, type Field } from "@/components/EditSheets";
+import { HeaderSheet, ProductSheet, PublishedSheet, TestimonialSheet, type Field } from "@/components/EditSheets";
 import InputScreen, { type Answer, type Input, type Notice } from "@/components/InputScreen";
 import StoreView, { type Block } from "@/components/StoreView";
 import type { GenerateEvent } from "@/lib/ai";
@@ -11,7 +11,7 @@ import type { ProductDraft } from "@/lib/validate";
 
 type Published = { slug: string; token: string };
 type Generating = { bio: string | null; products: ProductDraft[]; retrying: boolean; slow: boolean };
-type Sheet = { kind: "header" } | { kind: "product"; index: number } | { kind: "published" } | null;
+type Sheet = { kind: "header" } | { kind: "product"; index: number } | { kind: "testimonial"; index: number | null } | { kind: "published" } | null;
 type Draft = { input: Input; answers: Answer[] | null; store: Store | null; edited: boolean; published: Published | null };
 
 const DRAFT_KEY = "ai-storefront:draft:v1";
@@ -52,7 +52,7 @@ function forceFailHeaders(): Record<string, string> {
     : {};
 }
 
-type Initial = { store: Store; input: StoredInput; slug: string; token: string };
+type Initial = { store: Store; input: StoredInput; slug: string; token: string; taps: Record<string, number> };
 
 function readDraft(): Draft | null {
   try {
@@ -173,7 +173,8 @@ function Creator({ initial }: { initial?: Initial }) {
     };
     const finish = (result: GenerateResponse) => {
       if (result.status === "ok") {
-        setStore((s) => ({ name: s?.name ?? "", handle: handle || null, bio: result.store.bio, products: result.store.products }));
+        // The name and testimonials are the creator's own, so a new store keeps them.
+        setStore((s) => ({ name: s?.name ?? "", handle: handle || null, bio: result.store.bio, products: result.store.products, testimonials: s?.testimonials }));
         setAnswers(withAnswers);
         setEdited(false);
       } else if (fromEditor) {
@@ -301,8 +302,10 @@ function Creator({ initial }: { initial?: Initial }) {
             : {
                 onEdit: (block) => setSheet(block === "bio" ? { kind: "header" } : { kind: "product", index: block }),
                 onRedo: redo,
+                onTestimonial: (index) => setSheet({ kind: "testimonial", index }),
                 busy: busyBlock,
                 disabled: blocked,
+                taps: initial?.taps,
               }
         }
       />
@@ -339,6 +342,25 @@ function Creator({ initial }: { initial?: Initial }) {
             setStore({ ...store, products: store.products.map((p, i) => (i === sheet.index ? next : p)) });
             setSheet(null);
           }}
+        />
+      )}
+      {sheet?.kind === "testimonial" && store && (
+        <TestimonialSheet
+          initial={sheet.index === null ? null : (store.testimonials?.[sheet.index] ?? null)}
+          onClose={() => setSheet(null)}
+          onSave={(next) => {
+            const list = store.testimonials ?? [];
+            setStore({ ...store, testimonials: sheet.index === null ? [...list, next] : list.map((t, i) => (i === sheet.index ? next : t)) });
+            setSheet(null);
+          }}
+          onRemove={
+            sheet.index === null
+              ? undefined
+              : () => {
+                  setStore({ ...store, testimonials: (store.testimonials ?? []).filter((_, i) => i !== sheet.index) });
+                  setSheet(null);
+                }
+          }
         />
       )}
       {sheet?.kind === "published" && published && <PublishedSheet slug={published.slug} token={published.token} onClose={() => setSheet(null)} />}

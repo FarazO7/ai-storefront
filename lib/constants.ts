@@ -23,7 +23,12 @@ export const LIMITS = {
   option: 30,
   answer: 100,
   maxPrice: 100000,
+  testimonialName: 50,
+  testimonialText: 300,
+  testimonials: 3,
 } as const;
+
+export const DISCOUNT_TIP = "24 of 30 products in my research show a crossed-out price.";
 
 export const AI_ERROR = "The AI is taking a break. Please try again.";
 export const HANDLE_ONLY_MESSAGE = "We can't read Instagram yet. Tell us in a line what you post about.";

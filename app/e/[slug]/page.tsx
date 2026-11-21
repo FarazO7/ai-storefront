@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import CreatorApp from "@/components/CreatorApp";
-import { getStoreForEdit } from "@/lib/redis";
+import { getStoreForEdit, getTaps } from "@/lib/redis";
 
 // The edit token is in the URL: send no referrer when the creator taps an outside link, and keep the page out of search.
 export const metadata: Metadata = {
@@ -37,6 +37,7 @@ async function EditLoader({ params, searchParams }: Pick<PageProps<"/e/[slug]">,
     );
   }
 
-  const { name, handle, bio, products, input } = record;
-  return <CreatorApp initial={{ store: { name, handle, bio, products }, input, slug, token: t }} />;
+  const { name, handle, bio, products, testimonials, input } = record;
+  const taps = await getTaps(slug); // read only after the token checks out
+  return <CreatorApp initial={{ store: { name, handle, bio, products, testimonials }, input, slug, token: t, taps }} />;
 }

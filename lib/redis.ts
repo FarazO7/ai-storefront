@@ -43,6 +43,20 @@ export async function getStoreForEdit(slug: string, token: string): Promise<Stor
   return record && tokenMatches(token, record.tokenHash) ? record : null;
 }
 
+const tapsKey = (slug: string) => `taps:${slug}`;
+
+/** One tap per click on a product's interest button. Only a counter per product: no IP, no visitor data. */
+export async function recordTap(slug: string, productId: string): Promise<boolean> {
+  const store = await getStore(slug);
+  if (!store?.products.some((p) => p.id === productId)) return false;
+  await redis().hincrby(tapsKey(slug), productId, 1);
+  return true;
+}
+
+export async function getTaps(slug: string): Promise<Record<string, number>> {
+  return (await redis().hgetall<Record<string, number>>(tapsKey(slug))) ?? {};
+}
+
 /** Republishing from an edit link keeps the same slug. Returns false when the token doesn't match. */
 export async function updateStore(slug: string, token: string, store: Store, input: StoredInput): Promise<boolean> {
   const record = await getStoreForEdit(slug, token);

@@ -130,3 +130,26 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 
 ### Double-check
 - Add `FORCE_FAIL_SECRET` in Vercel (Production) before recording the demo; until then the switch is off on production.
+
+## 2026-11-21 — Phase 3 (should-haves)
+
+### What was built
+- **Editor only** (never on the public page):
+  - "Why this price": the model's rationale, the format's research band (lowest, highest, middle, number of price points), the anonymised examples for that format, and the per-minute figure for calls.
+  - "Based on few examples" under the price for the low-confidence formats.
+  - The break-even line: "About {sales} sale(s) a month at this price would cover SuperProfile's ₹499 Creator plan, after its 5% fee", with `sales = ceil(499 / (price × 0.95))`.
+- **Interest taps:** `/api/tap` adds one to a per-product counter in Redis (`taps:{slug}`, product id → count; no IP or visitor data), limited to 30 per minute per IP. The editor preview doesn't count its own taps. The edit link shows "N people tapped …" per product.
+- **Link previews:** title, description, Open Graph and Twitter tags on `/s/[slug]`, and a 1200×630 image drawn in code (initials, name, "Coming soon", bio, a chip per format) at `/s/[slug]/opengraph-image`.
+- **Testimonials:** up to 3, typed by the creator (name up to 50 characters, text up to 300), editable and removable, shown as "What people say". AI never writes or changes them, and a new store keeps them.
+- **Launch discount:** an optional launch price set by the creator, which must be lower than the regular price. The public page shows the launch price with the regular price crossed out, and the editor shows the tip "24 of 30 products in my research show a crossed-out price".
+
+### Decisions the AI made
+- Break-even uses the launch price when one is set (the price buyers pay now).
+- Limits not in the spec: up to 3 testimonials, 50 and 300 characters.
+- No new setting for absolute preview-image URLs: on Vercel, Next falls back to the production URL. WhatsApp's crawler is on Next's list of bots that get the tags in the `<head>`.
+
+### Verified locally
+- A launch price above the regular price is refused (HTTP 400). The public page shows ₹599 with ₹799 crossed out and the testimonial, and none of the editor-only text or the rationale.
+- Taps: two through the API and one by tapping the button in the browser were counted; an unknown product id isn't. The edit link showed the counts.
+- The editor's break-even numbers match the formula (₹99 → 6 sales, ₹599 launch price → 1, ₹199 → 3); "Based on few examples" shows only for the community product.
+- A request with WhatsApp's user agent gets og:title, og:description, og:image (absolute URL) and the twitter tags in the `<head>`; the image renders (1200×630 PNG).

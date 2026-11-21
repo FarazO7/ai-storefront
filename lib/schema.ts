@@ -74,15 +74,25 @@ export const modelOutputSchema = z.object({
 });
 
 // A store as the page holds it and /api/publish accepts it. Prices the creator types may sit outside the bands.
-export const productSchema = z.object({
-  id: z.string().min(1).max(20),
-  format: z.enum(FORMAT_IDS),
-  title: z.string().trim().min(1, "Every product needs a title.").max(LIMITS.title),
-  price: z.number().int().min(1).max(LIMITS.maxPrice),
-  rationale: z.string().max(LIMITS.rationale),
-  description: z.string().trim().min(1).max(LIMITS.productDescription),
-  buttonLabel: z.string().trim().min(1).max(LIMITS.buttonLabel),
-  fromCreator: z.boolean(),
+// launchPrice: an optional launch discount the creator sets; the regular price then shows crossed out. AI never sets it.
+export const productSchema = z
+  .object({
+    id: z.string().min(1).max(20),
+    format: z.enum(FORMAT_IDS),
+    title: z.string().trim().min(1, "Every product needs a title.").max(LIMITS.title),
+    price: z.number().int().min(1).max(LIMITS.maxPrice),
+    launchPrice: z.number().int().min(1).max(LIMITS.maxPrice).optional(),
+    rationale: z.string().max(LIMITS.rationale),
+    description: z.string().trim().min(1).max(LIMITS.productDescription),
+    buttonLabel: z.string().trim().min(1).max(LIMITS.buttonLabel),
+    fromCreator: z.boolean(),
+  })
+  .refine((p) => p.launchPrice === undefined || p.launchPrice < p.price, "The launch price must be lower than the regular price.");
+
+// Testimonials are typed by the creator, never generated.
+export const testimonialSchema = z.object({
+  name: z.string().trim().min(1).max(LIMITS.testimonialName),
+  text: z.string().trim().min(1).max(LIMITS.testimonialText),
 });
 
 export const storeSchema = z.object({
@@ -90,7 +100,10 @@ export const storeSchema = z.object({
   handle: z.string().regex(/^[A-Za-z0-9._]{1,30}$/).nullable(),
   bio: z.string().trim().min(1).max(LIMITS.bio),
   products: z.array(productSchema).min(2).max(4),
+  testimonials: z.array(testimonialSchema).max(LIMITS.testimonials).optional(),
 });
+
+export const tapRequestSchema = z.object({ slug: z.string().regex(/^[a-z0-9]{8}$/), productId: z.string().min(1).max(20) });
 
 export const publishRequestSchema = z.object({
   store: storeSchema,
@@ -130,5 +143,6 @@ export const generateResultSchema = z.discriminatedUnion("status", [
 
 export type Product = z.infer<typeof productSchema>;
 export type Store = z.infer<typeof storeSchema>;
+export type Testimonial = z.infer<typeof testimonialSchema>;
 export type GenerateResponse = z.infer<typeof generateResultSchema>;
 export type Question = { question: string; options: string[] };

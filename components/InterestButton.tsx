@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
-// shortcut: shows the thank-you only; Phase 3 also records the tap in Redis.
-export default function InterestButton({ label, handle }: { label: string; handle: string | null }) {
+// On the public page, each click also counts one tap (no personal data). The editor preview passes no `tap`,
+// so creators trying their own buttons don't inflate the count.
+export default function InterestButton({ label, handle, tap }: { label: string; handle: string | null; tap?: { slug: string; productId: string } }) {
   const [thanked, setThanked] = useState(false);
 
   if (thanked) {
@@ -14,7 +15,16 @@ export default function InterestButton({ label, handle }: { label: string; handl
     );
   }
   return (
-    <button type="button" onClick={() => setThanked(true)} className="h-12 w-full rounded-xl bg-zinc-900 font-medium text-white active:bg-zinc-700">
+    <button
+      type="button"
+      onClick={() => {
+        setThanked(true);
+        if (tap) {
+          void fetch("/api/tap", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(tap), keepalive: true }).catch(() => {});
+        }
+      }}
+      className="h-12 w-full rounded-xl bg-zinc-900 font-medium text-white active:bg-zinc-700"
+    >
       {label}
     </button>
   );

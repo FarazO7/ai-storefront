@@ -2,8 +2,8 @@
 
 import { useId, useState } from "react";
 import BottomSheet from "@/components/BottomSheet";
-import { LIMITS } from "@/lib/constants";
-import type { Product, Store } from "@/lib/schema";
+import { DISCOUNT_TIP, LIMITS } from "@/lib/constants";
+import type { Product, Store, Testimonial } from "@/lib/schema";
 
 export type Field = "bio" | "title" | "description" | "buttonLabel";
 export type Rewrite = (field: Field, draft: Store) => Promise<string | { error: string }>;
@@ -105,23 +105,27 @@ export function ProductSheet({ store, index, onClose, onSave, onRewrite }: {
   onRewrite: Rewrite;
 }) {
   const priceId = useId();
+  const launchId = useId();
   const original = store.products[index];
   const [title, setTitle] = useState(original.title);
   const [price, setPrice] = useState(String(original.price));
+  const [launchPrice, setLaunchPrice] = useState(original.launchPrice ? String(original.launchPrice) : "");
   const [description, setDescription] = useState(original.description);
   const [buttonLabel, setButtonLabel] = useState(original.buttonLabel);
 
   // Creators may set any whole-rupee price; the research bands only bind AI output.
   const priceOk = /^\d+$/.test(price) && Number(price) >= 1 && Number(price) <= LIMITS.maxPrice;
+  const launchOk = launchPrice === "" || (/^\d+$/.test(launchPrice) && Number(launchPrice) >= 1 && Number(launchPrice) < Number(price));
   const draft = (): Product => ({
     ...original,
     title: title.trim(),
     description: description.trim(),
     buttonLabel: buttonLabel.trim(),
     price: priceOk ? Number(price) : original.price,
+    launchPrice: launchPrice && launchOk && priceOk ? Number(launchPrice) : undefined,
   });
   const draftStore = (): Store => ({ ...store, products: store.products.map((p, i) => (i === index ? draft() : p)) });
-  const complete = title.trim() !== "" && description.trim() !== "" && buttonLabel.trim() !== "" && priceOk;
+  const complete = title.trim() !== "" && description.trim() !== "" && buttonLabel.trim() !== "" && priceOk && launchOk;
 
   return (
     <BottomSheet title={`Product ${index + 1}`} onClose={onClose}>
@@ -143,6 +147,25 @@ export function ProductSheet({ store, index, onClose, onSave, onRewrite }: {
           </p>
         )}
       </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={launchId} className="text-sm font-medium">
+          Launch price in ₹ (optional)
+        </label>
+        <input
+          id={launchId}
+          inputMode="numeric"
+          value={launchPrice}
+          onChange={(e) => setLaunchPrice(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          placeholder="Leave empty for no discount"
+          className={`${inputClass} h-12`}
+        />
+        <p className="text-sm text-zinc-500">{DISCOUNT_TIP} Your regular price shows crossed out next to it.</p>
+        {!launchOk && (
+          <p role="alert" className="text-sm text-red-700">
+            Make the launch price lower than the regular price.
+          </p>
+        )}
+      </div>
       <TextField
         label="Description"
         value={description}
@@ -153,6 +176,31 @@ export function ProductSheet({ store, index, onClose, onSave, onRewrite }: {
       />
       <TextField label="Button text" value={buttonLabel} onChange={setButtonLabel} max={LIMITS.buttonLabel} onRewrite={() => onRewrite("buttonLabel", draftStore())} />
       <SaveRow onCancel={onClose} onSave={() => onSave(draft())} disabled={!complete} />
+    </BottomSheet>
+  );
+}
+
+// Testimonials are only ever typed by the creator; AI never writes them.
+export function TestimonialSheet({ initial, onClose, onSave, onRemove }: {
+  initial: Testimonial | null;
+  onClose: () => void;
+  onSave: (next: Testimonial) => void;
+  onRemove?: () => void;
+}) {
+  const [name, setName] = useState(initial?.name ?? "");
+  const [text, setText] = useState(initial?.text ?? "");
+
+  return (
+    <BottomSheet title={initial ? "Edit testimonial" : "Add a testimonial"} onClose={onClose}>
+      <p className="text-sm text-zinc-600">For creators who already sell elsewhere. Only add words a real customer said about you.</p>
+      <TextField label="Their name" value={name} onChange={setName} max={LIMITS.testimonialName} />
+      <TextField label="What they said" value={text} onChange={setText} max={LIMITS.testimonialText} multiline />
+      {onRemove && (
+        <button type="button" onClick={onRemove} className="h-12 rounded-xl border border-red-300 font-medium text-red-700">
+          Remove this testimonial
+        </button>
+      )}
+      <SaveRow onCancel={onClose} onSave={() => onSave({ name: name.trim(), text: text.trim() })} disabled={!name.trim() || !text.trim()} />
     </BottomSheet>
   );
 }
