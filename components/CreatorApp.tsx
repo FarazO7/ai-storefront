@@ -16,7 +16,7 @@ type Sheet = { kind: "header" } | { kind: "product"; index: number } | { kind: "
 type Draft = { input: Input; answers: Answer[] | null; store: Store | null; edited: boolean; published: Published | null };
 
 const DRAFT_KEY = "ai-storefront:draft:v1";
-const EMPTY_INPUT: Input = { description: "", followers: null, handle: "", productInMind: "" };
+const EMPTY_INPUT: Input = { description: "", followers: null, handle: "", productInMind: "", instagramText: "" };
 const REDO_ERROR = "The AI is taking a break. Your version is unchanged; please try again.";
 const PUBLISH_ERROR = "We couldn't publish just now. Your store is still here; please try again.";
 
@@ -83,8 +83,8 @@ function Creator({ initial }: { initial?: Initial }) {
   const [draft] = useState(() => (editLink ? null : readDraft()));
   const [input, setInput] = useState<Input>(
     initial
-      ? { description: initial.input.description, followers: initial.input.followers, handle: initial.store.handle ?? "", productInMind: initial.input.productInMind ?? "" }
-      : (draft?.input ?? EMPTY_INPUT),
+      ? { description: initial.input.description, followers: initial.input.followers, handle: initial.store.handle ?? "", productInMind: initial.input.productInMind ?? "", instagramText: initial.input.instagramText ?? "" }
+      : { ...EMPTY_INPUT, ...draft?.input }, // drafts saved before Phase 4d have no instagramText
   );
   const [answers, setAnswers] = useState<Answer[] | null>(initial ? (initial.input.answers ?? null) : (draft?.answers ?? null));
   const [store, setStore] = useState<Store | null>(initial ? initial.store : (draft?.store ?? null));
@@ -147,6 +147,7 @@ function Creator({ initial }: { initial?: Initial }) {
     description: input.description.trim(),
     followers: input.followers ?? "none",
     productInMind: input.productInMind.trim() || undefined,
+    instagramText: input.instagramText.trim() || undefined,
     answers: withAnswers ?? undefined,
   });
 

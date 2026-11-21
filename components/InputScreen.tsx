@@ -4,7 +4,7 @@ import { useState } from "react";
 import { EXAMPLE_INPUTS, FOLLOWER_IDS, FOLLOWER_RANGES, HANDLE_ONLY_MESSAGE, HANDLE_PATTERN, LIMITS, type FollowerRange } from "@/lib/constants";
 import type { Question } from "@/lib/schema";
 
-export type Input = { description: string; followers: FollowerRange | null; handle: string; productInMind: string };
+export type Input = { description: string; followers: FollowerRange | null; handle: string; productInMind: string; instagramText: string };
 export type Answer = { question: string; answer: string };
 export type Notice = { kind: "questions"; questions: Question[] } | { kind: "rejected"; reason: string } | { kind: "failed"; message: string };
 
@@ -149,7 +149,7 @@ export default function InputScreen({ input, onChange, notice, busy, hasStore, o
         </div>
       </fieldset>
 
-      <details open={input.handle !== "" || input.productInMind !== "" || undefined} className="rounded-xl border border-zinc-300 px-3">
+      <details open={input.handle !== "" || input.productInMind !== "" || input.instagramText !== "" || undefined} className="rounded-xl border border-zinc-300 px-3">
         <summary className="min-h-12 cursor-pointer py-3 font-medium">Add more (optional)</summary>
         <div className="flex flex-col gap-4 pb-3">
           <label className="flex flex-col gap-1">
@@ -165,6 +165,18 @@ export default function InputScreen({ input, onChange, notice, busy, hasStore, o
               className="h-12 rounded-xl border border-zinc-300 px-3 text-base"
             />
             {handleInvalid && <span className="text-sm text-red-700">Use letters, numbers, dots and underscores (max 30).</span>}
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Paste your Instagram bio or a recent caption</span>
+            <textarea
+              value={input.instagramText}
+              onChange={(e) => set({ instagramText: e.target.value })}
+              rows={3}
+              maxLength={LIMITS.instagramText}
+              className="rounded-xl border border-zinc-300 p-3 text-base"
+            />
+            {/* maxLength cuts a long paste at 500, so the counter shows when that happened. */}
+            <span className="self-end text-sm text-zinc-500">{input.instagramText.length} / 500</span>
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium">Product in mind</span>

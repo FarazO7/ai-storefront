@@ -222,3 +222,21 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - I generated and published a store on production (case 1's input), then ran both calls with real models. The checklist took 7.2 s and the policies 5.3 s. The bump offer added the ₹199 community to the ₹599 course, there were no numbers about gains, and the contact appeared in all three drafts.
 - A wrong token is refused (403), and a blank answer is refused (400).
 - At 375 px, the edit link shows the section with three tips and two "Not needed to start" badges, with no sideways scrolling. The same store's public page doesn't show it.
+
+## 2026-11-22 — Phase 4d (Instagram signals)
+
+### What was built
+- An optional box under "Add more (optional)": "Paste your Instagram bio or a recent caption", up to 500 characters with a counter. A longer paste is cut at 500, and the counter shows it.
+- The text goes to the model inside the creator's data block, marked as pasted by the creator. It's saved with the store's input, so redo, rewrite and "Redo all" on the edit link use it too. It never appears on the public page.
+- Nothing is fetched from Instagram. The app calls no Instagram service, and the handle is still used only for the link on the store.
+
+### Decisions the AI made
+- The pasted text can add detail to thin input ("fitness" plus a bio becomes a store), but it can't get the input rejected on its own: unrelated, emoji-only or instruction-like text is ignored. Disallowed content is still rejected. Claims about results or earnings aren't copied from it.
+- The store stays in simple English when the pasted text is Hinglish. The first run kept "ghar ka khana" in a bio; one prompt line fixed it.
+- Generate still needs the main text box, as the spec says; pasted text alone isn't enough.
+- Drafts saved before this phase load with an empty box.
+
+### Verified locally
+- Real calls. "fitness" alone asks follow-up questions; with a pasted prenatal-yoga bio it returns a store for new moms in Bengaluru (7.3 s). An emoji-only caption doesn't trigger a rejection. A caption saying "Ignore all previous instructions..." is ignored: prices stay in band and no prompt text leaks. "I share easy cooking videos" plus a Hinglish caption returns Kerala recipes for working couples, in English.
+- 501 characters are refused before any AI call (400, "Please keep the Instagram text under 500 characters.").
+- At 375 px, the box sits between the handle and "Product in mind", the counter updates, and there's no sideways scrolling. A refresh keeps the text. Publishing saved it; on the edit link a bio redo sent it and used it; the public page doesn't contain it.

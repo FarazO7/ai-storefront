@@ -17,6 +17,8 @@ export const generateRequestSchema = z.object({
     .trim()
     .max(LIMITS.productInMind, "Please keep 'Product in mind' under 150 characters.")
     .optional(),
+  // The creator's own Instagram bio or caption, pasted by them. The app never fetches anything from Instagram.
+  instagramText: z.string().trim().max(LIMITS.instagramText, "Please keep the Instagram text under 500 characters.").optional(),
   answers: z
     .array(
       z.object({

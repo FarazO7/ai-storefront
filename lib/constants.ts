@@ -12,6 +12,7 @@ export const FOLLOWER_IDS = ["none", "under10k", "10k-50k", "50k+"] as const;
 export const LIMITS = {
   description: 1000,
   productInMind: 150,
+  instagramText: 500,
   name: 50,
   bio: 220,
   title: 75,
