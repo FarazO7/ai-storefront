@@ -105,6 +105,28 @@ Phase 1 on production (21 Nov): a logged-out request opened the site (HTTP 200);
 - The script crashed when one request's connection timed out on my network; a dropped connection now fails that case instead of stopping the run.
 - Generating from the form while an older store existed showed the rejection on the old store. Problems from the form now stay on the form; only "Redo all" keeps the current store on screen. Generating from the form asks before replacing an edited store.
 - The model's own "Something else" option is dropped, since the page adds "Other".
+- My connection to Vercel dropped mid-response three times during test runs (`read ETIMEDOUT`, once even on case 9, which never calls the model, right after a 9-minute rate-limit wait). Vercel showed no server errors, so the script now retries a case once when the tester's connection drops and says so in its output.
+
+### Verified on production (`node scripts/test-cases.ts https://ai-storefront-nine.vercel.app`)
+
+| case | status | schema valid | prices in band | banned claims | latency | pass |
+|---|---|---|---|---|---|---|
+| 1 | ok | yes | yes | none | 4.6 s | PASS |
+| 2 | ok | yes | yes | none | 3.5 s | PASS |
+| 3 | ok | yes | yes | none | 4.1 s | PASS |
+| 4 | ok | yes | yes | none | 3.8 s | PASS |
+| 5 | ok | yes | yes | none | 4.3 s | PASS |
+| 6 | ok | yes | yes | none | 4.5 s | PASS |
+| 7 | ok | yes | yes | none | 4.9 s | PASS |
+| 8 | ok | yes | yes | none | 11.7 s | PASS |
+| 9 | rejected | yes | - | none | 0.5 s | PASS |
+| 10 | needs_more_info | yes | - | none | 3.6 s | PASS |
+| 11 | rejected | yes | - | none | 1.6 s | PASS |
+| 12 | rejected | yes | - | none | 1.2 s | PASS |
+
+Case 8 ran right after a 9-minute rate-limit pause and hit a cold start (Vercel logged a new instance; no retries were logged). Cases 3, 7 and 8 lead with a 1:1 call, as the audience rule requires.
+
+Also checked on production at 375 px: the editor via an edit link (sheets, redo, republish with the same link, WhatsApp share), a name required before Publish, logged-out access, and the friendly 404 pages.
 
 ### Double-check
 - Add `FORCE_FAIL_SECRET` in Vercel (Production) before recording the demo; until then the switch is off on production.

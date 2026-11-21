@@ -31,36 +31,41 @@ const base = (process.argv[2] ?? "https://ai-storefront-nine.vercel.app").replac
 const only = process.argv.slice(3).map(Number);
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function generate(c: Case): Promise<{ result: GenerateResponse | null; error: string | null; seconds: number }> {
+async function generate(c: Case, attempt = 1): Promise<{ result: GenerateResponse | null; error: string | null; seconds: number }> {
   for (;;) {
     const started = Date.now();
-    let res: Response;
     try {
-      res = await fetch(`${base}/api/generate`, {
+      const res = await fetch(`${base}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: c.description, followers: c.followers }),
       });
+      if (res.status === 429) {
+        const { retryAfter } = (await res.json()) as { retryAfter: number };
+        console.log(`  case ${c.n}: rate-limited, waiting ${retryAfter} s…`);
+        await sleep((retryAfter + 2) * 1000);
+        continue;
+      }
+      if (!res.ok || !res.body) return { result: null, error: `HTTP ${res.status}`, seconds: (Date.now() - started) / 1000 };
+      let result: GenerateResponse | null = null;
+      let error: string | null = null;
+      for (const line of (await res.text()).split("\n")) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === "done") result = event.result;
+        if (event.type === "error") error = event.message;
+      }
+      return { result, error, seconds: (Date.now() - started) / 1000 };
     } catch (error) {
-      // A dropped connection fails this case instead of stopping the whole run.
-      return { result: null, error: `network: ${error instanceof Error ? (error.cause as Error)?.message ?? error.message : error}`, seconds: (Date.now() - started) / 1000 };
+      // The tester's connection dropped (not an app answer): retry the case once, then record it as failed.
+      const reason = error instanceof Error ? ((error.cause as Error)?.message ?? error.message) : String(error);
+      if (attempt === 1) {
+        console.log(`  case ${c.n}: connection dropped (${reason}); retrying once…`);
+        await sleep(3000);
+        return generate(c, 2);
+      }
+      return { result: null, error: `network: ${reason}`, seconds: (Date.now() - started) / 1000 };
     }
-    if (res.status === 429) {
-      const { retryAfter } = (await res.json()) as { retryAfter: number };
-      console.log(`  case ${c.n}: rate-limited, waiting ${retryAfter} s…`);
-      await sleep((retryAfter + 2) * 1000);
-      continue;
-    }
-    if (!res.ok || !res.body) return { result: null, error: `HTTP ${res.status}`, seconds: (Date.now() - started) / 1000 };
-    let result: GenerateResponse | null = null;
-    let error: string | null = null;
-    for (const line of (await res.text()).split("\n")) {
-      if (!line.trim()) continue;
-      const event = JSON.parse(line);
-      if (event.type === "done") result = event.result;
-      if (event.type === "error") error = event.message;
-    }
-    return { result, error, seconds: (Date.now() - started) / 1000 };
   }
 }
 
