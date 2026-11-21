@@ -45,7 +45,7 @@ const FORCED_CLAIM = " Guaranteed results.";
 
 const isComplete = (p: Partial<ProductDraft> | undefined): p is ProductDraft =>
   !!p && typeof p.format === "string" && typeof p.title === "string" && typeof p.price === "number" && typeof p.rationale === "string" &&
-  typeof p.description === "string" && typeof p.buttonLabel === "string" && typeof p.fromCreator === "boolean";
+  typeof p.description === "string" && typeof p.buttonLabel === "string" && typeof p.fromCreator === "boolean" && Array.isArray(p.faqs);
 
 /** Streams a store block by block. Each block is sent only after it passes the checks. */
 export async function* streamStore(input: StoredInput, forceFail: ForceFail | null): AsyncGenerator<GenerateEvent> {
@@ -72,7 +72,8 @@ export async function* streamStore(input: StoredInput, forceFail: ForceFail | nu
       instructions: SYSTEM_PROMPT,
       prompt: buildUserMessage(input, failure?.problems),
       output: Output.object({ schema: modelOutputSchema }),
-      maxOutputTokens: 2000,
+      // Raised from 2,000 in Phase 4b: 2 or 3 FAQs per product add about 900 tokens to a 4-product store.
+      maxOutputTokens: 3500,
       // Reasoning tokens count toward maxOutputTokens and add time; low keeps a store inside the 25 s timeout.
       reasoning: "low",
       maxRetries: 0,

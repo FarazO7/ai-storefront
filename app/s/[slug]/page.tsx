@@ -46,7 +46,16 @@ async function PublicStore({ params }: { params: Promise<{ slug: string }> }) {
             bio,
             testimonials,
             theme,
-            products: products.map(({ id, format, title, price, launchPrice, description, buttonLabel }) => ({ id, format, title, price, launchPrice, description, buttonLabel })),
+            products: products.map(({ id, format, title, price, launchPrice, description, buttonLabel, faqs }) => ({
+              id,
+              format,
+              title,
+              price,
+              launchPrice,
+              description,
+              buttonLabel,
+              faqs,
+            })),
           }}
         />
       </main>

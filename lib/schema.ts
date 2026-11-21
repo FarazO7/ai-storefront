@@ -49,6 +49,16 @@ export const modelProductSchema = z.object({
   description: z.string().describe("Max 300 characters"),
   buttonLabel: z.string().describe("Max 25 characters, an interest action such as 'Notify me'; never 'Buy'"),
   fromCreator: z.boolean().describe("True only for the creator's 'product in mind'"),
+  faqs: z
+    .array(
+      z.object({
+        question: z.string().describe("Max 80 characters"),
+        answer: z.string().describe("Max 300 characters, answered only from this product's description"),
+      }),
+    )
+    .min(2)
+    .max(3)
+    .describe("2 or 3 questions a buyer might ask, answered only from this product's description"),
 });
 
 export const modelOutputSchema = z.object({
@@ -73,21 +83,32 @@ export const modelOutputSchema = z.object({
     .describe("Only for ok"),
 });
 
+export const faqSchema = z.object({
+  question: z.string().trim().min(1).max(LIMITS.faqQuestion),
+  answer: z.string().trim().min(1).max(LIMITS.faqAnswer),
+});
+
 // A store as the page holds it and /api/publish accepts it. Prices the creator types may sit outside the bands.
 // launchPrice: an optional launch discount the creator sets; the regular price then shows crossed out. AI never sets it.
-export const productSchema = z
-  .object({
-    id: z.string().min(1).max(20),
-    format: z.enum(FORMAT_IDS),
-    title: z.string().trim().min(1, "Every product needs a title.").max(LIMITS.title),
-    price: z.number().int().min(1).max(LIMITS.maxPrice),
-    launchPrice: z.number().int().min(1).max(LIMITS.maxPrice).optional(),
-    rationale: z.string().max(LIMITS.rationale),
-    description: z.string().trim().min(1).max(LIMITS.productDescription),
-    buttonLabel: z.string().trim().min(1).max(LIMITS.buttonLabel),
-    fromCreator: z.boolean(),
-  })
-  .refine((p) => p.launchPrice === undefined || p.launchPrice < p.price, "The launch price must be lower than the regular price.");
+// faqs: generated 2 or 3 per product; the creator may edit or remove them, so a saved product can have fewer.
+const productObject = z.object({
+  id: z.string().min(1).max(20),
+  format: z.enum(FORMAT_IDS),
+  title: z.string().trim().min(1, "Every product needs a title.").max(LIMITS.title),
+  price: z.number().int().min(1).max(LIMITS.maxPrice),
+  launchPrice: z.number().int().min(1).max(LIMITS.maxPrice).optional(),
+  rationale: z.string().max(LIMITS.rationale),
+  description: z.string().trim().min(1).max(LIMITS.productDescription),
+  buttonLabel: z.string().trim().min(1).max(LIMITS.buttonLabel),
+  fromCreator: z.boolean(),
+  faqs: z.array(faqSchema).max(3).optional(),
+});
+export const productSchema = productObject.refine(
+  (p) => p.launchPrice === undefined || p.launchPrice < p.price,
+  "The launch price must be lower than the regular price.",
+);
+// What generation itself must deliver: exactly 2 or 3 FAQs per product.
+const generatedProductSchema = productObject.extend({ faqs: z.array(faqSchema).min(2).max(3) });
 
 // Testimonials are typed by the creator, never generated.
 export const testimonialSchema = z.object({
@@ -130,7 +151,7 @@ export const generateResultSchema = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("ok"),
     store: z
-      .object({ bio: z.string().min(1).max(LIMITS.bio), products: z.array(productSchema).min(2).max(4) })
+      .object({ bio: z.string().min(1).max(LIMITS.bio), products: z.array(generatedProductSchema).min(2).max(4) })
       .refine((s) => new Set(s.products.map((p) => p.format)).size === s.products.length, "Two products share a format."),
   }),
   z.object({
@@ -145,5 +166,6 @@ export const generateResultSchema = z.discriminatedUnion("status", [
 export type Product = z.infer<typeof productSchema>;
 export type Store = z.infer<typeof storeSchema>;
 export type Testimonial = z.infer<typeof testimonialSchema>;
+export type Faq = z.infer<typeof faqSchema>;
 export type GenerateResponse = z.infer<typeof generateResultSchema>;
 export type Question = { question: string; options: string[] };

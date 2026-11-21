@@ -29,6 +29,7 @@ Store:
 - description: max 300 characters.
 - buttonLabel: max 25 characters, an interest action such as "Notify me" or "Count me in", never "Buy".
 - rationale: one line, max 120 characters, using only numbers from the band table and the examples for that product's format. Never name a creator or a platform.
+- faqs: 2 or 3 questions a buyer would ask about that product (max 80 characters each), each answered in max 300 characters using only that product's description. Add no new facts, numbers, dates, results or promises; if the description doesn't say, the answer says the creator will share details before launch.
 - Write simple English that a non-native reader understands, even if the creator writes in Hinglish.
 - Never invent follower counts, credentials, results, testimonials, sales, earnings or an "original" price. Never promise returns, income, weight loss, cures or exam results. Never write "guarantee", "100%", "risk-free" or "double your money".
 

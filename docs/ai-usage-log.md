@@ -176,3 +176,20 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 
 ### Verified on production
 - An unknown theme is refused (HTTP 400). Stores published with Sunset and Forest render their colours (#fff7ed with #c2410c, #f0fdf4 with #15803d), and their preview images load. Sunset checked by eye at 375 px: no sideways scrolling.
+
+## 2026-11-22 — Phase 4b (FAQs)
+
+### What was built
+- The model's product schema now has 2 or 3 FAQs per product (question up to 80 characters, answer up to 300). The prompt says to answer only from that product's description, add no new facts, and say the creator will share details before launch when the description doesn't cover it.
+- FAQ text goes through the same checks as other text: banned claims are always sent back; over-long text is sent back once, then cut at a word.
+- Public page and editor preview: FAQs sit under each product's button, collapsed, with a "+" that turns into "×" when open. "Why this price" uses the same marker.
+- Editor: the product sheet lists each FAQ to edit or remove. A saved product may end up with fewer than 2; generation itself must return 2 or 3 (the test script checks this).
+
+### Decisions the AI made
+- Raised the store's output cap from 2,000 to 3,500 tokens: FAQs add about 900 tokens to a 4-product store, and the old cap would cut stores off mid-answer. A 4-product store now takes about 11 s instead of about 5 s.
+- Code doesn't check that answers stay within the description; the prompt does, and a spot check of a real store found no invented facts.
+
+### Verified locally
+- Cases 1 and 8 pass with the stricter schema (2 or 3 FAQs each).
+- A real store's FAQs used only facts from its descriptions ("The call is 60 minutes."; "The ebook includes 30 Kerala home recipes."), and said "The creator will share details before launch" when asked about something not described.
+- At 375 px: FAQs start collapsed, each question is a 44 px tap target, removing one in the sheet removes it from the card and from the published page.

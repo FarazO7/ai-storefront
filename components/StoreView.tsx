@@ -12,6 +12,7 @@ export type ViewProduct = {
   rationale?: string;
   description: string;
   buttonLabel: string;
+  faqs?: { question: string; answer: string }[];
 };
 export type ViewStore = {
   name: string;
@@ -54,6 +55,14 @@ function initials(name: string): string {
 
 const Skeleton = ({ className }: { className: string }) => <div aria-hidden className={`animate-pulse rounded-lg bg-zinc-200 ${className}`} />;
 
+// Collapsible rows: a "+" that turns into "×" when open, so they look tappable (Safari's own marker is hidden).
+const summaryClass = "flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 text-sm font-medium [&::-webkit-details-marker]:hidden";
+const OpenMark = () => (
+  <span aria-hidden className="text-lg leading-none text-zinc-400 transition-transform group-open:rotate-45">
+    +
+  </span>
+);
+
 function BlockActions({ block, edit }: { block: Block; edit: EditControls }) {
   return (
     <div className="flex justify-end gap-2">
@@ -81,8 +90,11 @@ function EditorNotes({ product, taps }: { product: ViewProduct; taps?: number })
       <p>
         About {sales} {sales === 1 ? "sale" : "sales"} a month at this price would cover SuperProfile&apos;s {rupees(CREATOR_PLAN_MONTHLY_RUPEES)} Creator plan, after its 5% fee.
       </p>
-      <details>
-        <summary className="flex min-h-11 cursor-pointer items-center font-medium">Why this price</summary>
+      <details className="group">
+        <summary className={summaryClass}>
+          <span>Why this price</span>
+          <OpenMark />
+        </summary>
         <div className="flex flex-col gap-2 pb-1">
           {product.rationale && <p>{product.rationale}</p>}
           <p>
@@ -182,6 +194,21 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
             {edit && FORMATS[product.format].lowConfidence && <p className="-mt-2 text-xs font-medium text-amber-700">Based on few examples</p>}
             <p className="text-zinc-700">{product.description}</p>
             <InterestButton label={product.buttonLabel} handle={store.handle} tap={slug && product.id ? { slug, productId: product.id } : undefined} />
+            {product.faqs && product.faqs.length > 0 && (
+              // Collapsed: visitors open only the questions they care about.
+              <div className="flex flex-col">
+                <p className="text-sm font-semibold">Questions</p>
+                {product.faqs.map((faq, j) => (
+                  <details key={j} className="group border-b border-zinc-200 last:border-b-0">
+                    <summary className={summaryClass}>
+                      <span>{faq.question}</span>
+                      <OpenMark />
+                    </summary>
+                    <p className="pb-3 text-sm text-zinc-700">{faq.answer}</p>
+                  </details>
+                ))}
+              </div>
+            )}
             {edit && <EditorNotes product={product} taps={edit.taps && product.id ? (edit.taps[product.id] ?? 0) : undefined} />}
           </li>
         ))}

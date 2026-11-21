@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import BottomSheet from "@/components/BottomSheet";
 import { DISCOUNT_TIP, LIMITS } from "@/lib/constants";
-import type { Product, Store, Testimonial } from "@/lib/schema";
+import type { Faq, Product, Store, Testimonial } from "@/lib/schema";
 
 export type Field = "bio" | "title" | "description" | "buttonLabel";
 export type Rewrite = (field: Field, draft: Store) => Promise<string | { error: string }>;
@@ -112,10 +112,13 @@ export function ProductSheet({ store, index, onClose, onSave, onRewrite }: {
   const [launchPrice, setLaunchPrice] = useState(original.launchPrice ? String(original.launchPrice) : "");
   const [description, setDescription] = useState(original.description);
   const [buttonLabel, setButtonLabel] = useState(original.buttonLabel);
+  const [faqs, setFaqs] = useState<Faq[]>(original.faqs ?? []);
+  const setFaq = (j: number, patch: Partial<Faq>) => setFaqs(faqs.map((faq, k) => (k === j ? { ...faq, ...patch } : faq)));
 
   // Creators may set any whole-rupee price; the research bands only bind AI output.
   const priceOk = /^\d+$/.test(price) && Number(price) >= 1 && Number(price) <= LIMITS.maxPrice;
   const launchOk = launchPrice === "" || (/^\d+$/.test(launchPrice) && Number(launchPrice) >= 1 && Number(launchPrice) < Number(price));
+  const faqsOk = faqs.every((faq) => faq.question.trim() !== "" && faq.answer.trim() !== "");
   const draft = (): Product => ({
     ...original,
     title: title.trim(),
@@ -123,9 +126,10 @@ export function ProductSheet({ store, index, onClose, onSave, onRewrite }: {
     buttonLabel: buttonLabel.trim(),
     price: priceOk ? Number(price) : original.price,
     launchPrice: launchPrice && launchOk && priceOk ? Number(launchPrice) : undefined,
+    faqs: faqs.map((faq) => ({ question: faq.question.trim(), answer: faq.answer.trim() })),
   });
   const draftStore = (): Store => ({ ...store, products: store.products.map((p, i) => (i === index ? draft() : p)) });
-  const complete = title.trim() !== "" && description.trim() !== "" && buttonLabel.trim() !== "" && priceOk && launchOk;
+  const complete = title.trim() !== "" && description.trim() !== "" && buttonLabel.trim() !== "" && priceOk && launchOk && faqsOk;
 
   return (
     <BottomSheet title={`Product ${index + 1}`} onClose={onClose}>
@@ -175,6 +179,25 @@ export function ProductSheet({ store, index, onClose, onSave, onRewrite }: {
         onRewrite={() => onRewrite("description", draftStore())}
       />
       <TextField label="Button text" value={buttonLabel} onChange={setButtonLabel} max={LIMITS.buttonLabel} onRewrite={() => onRewrite("buttonLabel", draftStore())} />
+      {faqs.map((faq, j) => (
+        <fieldset key={j} className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-3">
+          <legend className="px-1 text-sm font-semibold">Question {j + 1}</legend>
+          <TextField label="Question" value={faq.question} onChange={(question) => setFaq(j, { question })} max={LIMITS.faqQuestion} />
+          <TextField label="Answer" value={faq.answer} onChange={(answer) => setFaq(j, { answer })} max={LIMITS.faqAnswer} multiline />
+          <button
+            type="button"
+            onClick={() => setFaqs(faqs.filter((_, k) => k !== j))}
+            className="h-11 self-start rounded-full border border-red-300 px-4 text-sm font-medium text-red-700"
+          >
+            Remove this question
+          </button>
+        </fieldset>
+      ))}
+      {!faqsOk && (
+        <p role="alert" className="text-sm text-red-700">
+          Fill in each question and answer, or remove it.
+        </p>
+      )}
       <SaveRow onCancel={onClose} onSave={() => onSave(draft())} disabled={!complete} />
     </BottomSheet>
   );

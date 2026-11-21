@@ -71,7 +71,12 @@ async function generate(c: Case, attempt = 1): Promise<{ result: GenerateRespons
 
 function allText(result: GenerateResponse | null): string {
   if (!result) return "";
-  if (result.status === "ok") return [result.store.bio, ...result.store.products.flatMap((p) => [p.title, p.description, p.rationale, p.buttonLabel])].join("\n");
+  if (result.status === "ok") {
+    return [
+      result.store.bio,
+      ...result.store.products.flatMap((p) => [p.title, p.description, p.rationale, p.buttonLabel, ...p.faqs.flatMap((f) => [f.question, f.answer])]),
+    ].join("\n");
+  }
   if (result.status === "rejected") return result.reason;
   return result.questions.flatMap((q) => [q.question, ...q.options]).join("\n");
 }

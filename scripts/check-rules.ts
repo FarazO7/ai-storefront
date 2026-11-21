@@ -30,10 +30,19 @@ assert.equal(
 );
 
 // Duplicate formats: reported on the first try, dropped as a last resort.
-const product = { format: "ebook" as const, title: "7 Home Workout Plans", price: 120, rationale: "Ebooks sell for ₹49 to ₹799.", description: "Plans.", buttonLabel: "Notify me", fromCreator: false };
+const product = { format: "ebook" as const, title: "7 Home Workout Plans", price: 120, rationale: "Ebooks sell for ₹49 to ₹799.", description: "Plans.", buttonLabel: "Notify me", fromCreator: false, faqs: [] };
 assert.equal(checkProduct(product, ["ebook"], 1, false).problems.length, 1);
 assert.equal(checkProduct(product, ["ebook"], 1, true).value, null);
 assert.equal(checkProduct({ ...product, buttonLabel: "Buy now" }, [], 0, true).value?.buttonLabel, "Notify me");
+
+// FAQs: banned claims are always sent back; long answers are sent back once, then cut at a word.
+const longAnswer = "word ".repeat(70).trim(); // 349 characters
+const withFaqs = { ...product, faqs: [{ question: "Is it for beginners?", answer: longAnswer }, { question: "Do results come fast?", answer: "Guaranteed results in a week." }] };
+assert.deepEqual(checkProduct(withFaqs, [], 0, false).problems, [
+  "product 1 FAQ 1 answer is 349 characters; the limit is 300",
+  'product 1 FAQ 2 answer contains a banned claim ("guarantee")',
+]);
+assert.ok(checkProduct(withFaqs, [], 0, true).value!.faqs![0].answer.length <= 300);
 
 // A follow-up round must not ask more questions; a store with one product left fails.
 const questions = [{ question: "What do you teach?", options: ["Yoga", "Other"] }, { question: "Who for?", options: ["Beginners", "Something else"] }];

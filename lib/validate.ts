@@ -15,6 +15,7 @@ export type ProductDraft = {
   description: string;
   buttonLabel: string;
   fromCreator: boolean;
+  faqs: { question: string; answer: string }[];
 };
 
 /** Clamp into the format's band, then move to the nearest price ending in 49 or 99 inside the band (ties go down). */
@@ -120,6 +121,10 @@ export function checkProduct<T extends ProductDraft>(
     buttonLabel,
     price: fixPrice(product.format, product.price),
     rationale: checkText(`${label} rationale`, fixRationale(product.format, product.rationale.trim()), LIMITS.rationale, lastResort, problems),
+    faqs: product.faqs.map((faq, j) => ({
+      question: checkText(`${label} FAQ ${j + 1} question`, faq.question, LIMITS.faqQuestion, lastResort, problems),
+      answer: checkText(`${label} FAQ ${j + 1} answer`, faq.answer, LIMITS.faqAnswer, lastResort, problems),
+    })),
   };
   return { value, problems };
 }
