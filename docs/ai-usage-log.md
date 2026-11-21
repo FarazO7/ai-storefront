@@ -173,3 +173,6 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 ### Verified locally
 - Picking Ocean in the editor changed the preview background (#eff6ff), the buttons (#1d4ed8), "Coming soon" (#0e7490) and the link; the swatches are 56 px tall.
 - Republishing saved `theme: "ocean"` in Redis; the public page and the preview image both used it, with no sideways scrolling at 375 px.
+
+### Verified on production
+- An unknown theme is refused (HTTP 400). Stores published with Sunset and Forest render their colours (#fff7ed with #c2410c, #f0fdf4 with #15803d), and their preview images load. Sunset checked by eye at 375 px: no sideways scrolling.
