@@ -23,7 +23,7 @@ export default function InterestButton({ label, handle, tap }: { label: string; 
           void fetch("/api/tap", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(tap), keepalive: true }).catch(() => {});
         }
       }}
-      className="h-12 w-full rounded-xl bg-zinc-900 font-medium text-white active:bg-zinc-700"
+      className="h-12 w-full rounded-xl bg-(--store-button) font-medium text-white active:opacity-80"
     >
       {label}
     </button>

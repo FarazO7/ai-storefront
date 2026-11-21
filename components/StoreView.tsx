@@ -1,4 +1,6 @@
+import type { CSSProperties } from "react";
 import InterestButton from "@/components/InterestButton";
+import { themeVars, type ThemeId } from "@/lib/constants";
 import { CALL_RUPEES_PER_MINUTE, CREATOR_PLAN_MONTHLY_RUPEES, EXAMPLES, FORMATS, SHARE_AFTER_FEE, type Format } from "@/lib/pricing";
 
 export type ViewProduct = {
@@ -11,7 +13,14 @@ export type ViewProduct = {
   description: string;
   buttonLabel: string;
 };
-export type ViewStore = { name: string; handle: string | null; bio: string; products: ViewProduct[]; testimonials?: { name: string; text: string }[] };
+export type ViewStore = {
+  name: string;
+  handle: string | null;
+  bio: string;
+  products: ViewProduct[];
+  testimonials?: { name: string; text: string }[];
+  theme?: ThemeId;
+};
 export type Block = "bio" | number;
 export type EditControls = {
   onEdit: (block: Block) => void;
@@ -112,7 +121,8 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
   const testimonials = store.testimonials ?? [];
 
   return (
-    <article aria-busy={pending} className="flex flex-col gap-6 break-words">
+    // The theme's colours reach every child through CSS variables; the page around it paints the background.
+    <article aria-busy={pending} style={themeVars(store.theme) as CSSProperties} className="flex flex-col gap-6 break-words">
       <header className={`flex flex-col gap-3 ${edit?.busy === "bio" ? "opacity-50" : ""}`}>
         {edit && <BlockActions block="bio" edit={edit} />}
         <div className="flex flex-col items-center gap-2 text-center">
@@ -129,7 +139,7 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
             <h1 className="text-2xl font-semibold text-zinc-400">Add your name</h1>
           )}
           {store.handle && (
-            <a href={`https://instagram.com/${store.handle}`} target="_blank" rel="noreferrer" className="flex min-h-11 items-center text-sky-700 underline">
+            <a href={`https://instagram.com/${store.handle}`} target="_blank" rel="noreferrer" className="flex min-h-11 items-center text-(--store-link) underline">
               @{store.handle} on Instagram
             </a>
           )}
@@ -149,14 +159,14 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
         {store.products.map((product, index) => (
           <li
             key={product.id ?? index}
-            className={`flex flex-col gap-3 rounded-2xl border border-zinc-200 p-4 shadow-sm ${edit?.busy === index ? "opacity-50" : ""}`}
+            className={`flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm ${edit?.busy === index ? "opacity-50" : ""}`}
           >
             {edit && <BlockActions block={index} edit={edit} />}
             <div aria-hidden className={`flex h-36 flex-col justify-end rounded-xl bg-linear-to-br p-4 text-white ${COVERS[product.format]}`}>
               <span className="text-xs font-semibold uppercase tracking-wide">{FORMATS[product.format].label}</span>
               <span className="mt-1 line-clamp-3 text-lg leading-snug font-semibold">{product.title}</span>
             </div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Coming soon</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-(--store-accent)">Coming soon</p>
             <h2 className="text-lg leading-snug font-semibold">{product.title}</h2>
             <p className="text-sm text-zinc-500">{FORMATS[product.format].label}</p>
             <p className="flex items-baseline gap-2">
@@ -176,7 +186,7 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
           </li>
         ))}
         {pending && (
-          <li aria-hidden className="flex flex-col gap-3 rounded-2xl border border-zinc-200 p-4">
+          <li aria-hidden className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
             <Skeleton className="h-36" />
             <Skeleton className="h-5 w-2/3" />
             <Skeleton className="h-4 w-1/3" />
@@ -189,7 +199,7 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
         <section className="flex flex-col gap-3">
           {testimonials.length > 0 && <h2 className="text-lg font-semibold">What people say</h2>}
           {testimonials.map((testimonial, index) => (
-            <figure key={index} className="flex flex-col gap-2 rounded-2xl border border-zinc-200 p-4">
+            <figure key={index} className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-4">
               <blockquote className="text-zinc-700">&ldquo;{testimonial.text}&rdquo;</blockquote>
               <figcaption className="text-sm font-medium">{testimonial.name}</figcaption>
               {edit && (

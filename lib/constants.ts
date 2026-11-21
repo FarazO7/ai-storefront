@@ -30,6 +30,25 @@ export const LIMITS = {
 
 export const DISCOUNT_TIP = "24 of 30 products in my research show a crossed-out price.";
 
+// Colour themes, picked in the editor and saved with the store. Covers keep one colour per format.
+// White button text on each `button` colour meets the 4.5:1 contrast minimum.
+export const THEMES = {
+  classic: { label: "Classic", bg: "#ffffff", button: "#18181b", accent: "#b45309", link: "#0369a1" },
+  sunset: { label: "Sunset", bg: "#fff7ed", button: "#c2410c", accent: "#be123c", link: "#c2410c" },
+  ocean: { label: "Ocean", bg: "#eff6ff", button: "#1d4ed8", accent: "#0e7490", link: "#1d4ed8" },
+  forest: { label: "Forest", bg: "#f0fdf4", button: "#15803d", accent: "#a16207", link: "#15803d" },
+} as const;
+export const THEME_IDS = ["classic", "sunset", "ocean", "forest"] as const;
+export type ThemeId = (typeof THEME_IDS)[number];
+
+/** CSS variables for a theme; components read them as bg-(--store-bg), text-(--store-accent) and so on. */
+export const themeVars = (id: ThemeId = "classic"): Record<string, string> => ({
+  "--store-bg": THEMES[id].bg,
+  "--store-button": THEMES[id].button,
+  "--store-accent": THEMES[id].accent,
+  "--store-link": THEMES[id].link,
+});
+
 export const AI_ERROR = "The AI is taking a break. Please try again.";
 export const HANDLE_ONLY_MESSAGE = "We can't read Instagram yet. Tell us in a line what you post about.";
 export const EMPTY_INPUT_MESSAGE = "Tell us in a line or two what you do.";

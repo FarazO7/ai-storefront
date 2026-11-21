@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FOLLOWER_IDS, HANDLE_PATTERN, LIMITS } from "./constants.ts";
+import { FOLLOWER_IDS, HANDLE_PATTERN, LIMITS, THEME_IDS } from "./constants.ts";
 import { FORMAT_IDS } from "./pricing.ts";
 
 // What the page sends to /api/generate. Messages are shown to creators as written.
@@ -101,6 +101,7 @@ export const storeSchema = z.object({
   bio: z.string().trim().min(1).max(LIMITS.bio),
   products: z.array(productSchema).min(2).max(4),
   testimonials: z.array(testimonialSchema).max(LIMITS.testimonials).optional(),
+  theme: z.enum(THEME_IDS).optional(), // missing means "classic"
 });
 
 export const tapRequestSchema = z.object({ slug: z.string().regex(/^[a-z0-9]{8}$/), productId: z.string().min(1).max(20) });

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { HeaderSheet, ProductSheet, PublishedSheet, TestimonialSheet, type Field } from "@/components/EditSheets";
 import InputScreen, { type Answer, type Input, type Notice } from "@/components/InputScreen";
 import StoreView, { type Block } from "@/components/StoreView";
 import type { GenerateEvent } from "@/lib/ai";
-import { AI_ERROR } from "@/lib/constants";
+import { AI_ERROR, THEME_IDS, THEMES, themeVars, type ThemeId } from "@/lib/constants";
 import type { GenerateResponse, Product, Store, StoredInput } from "@/lib/schema";
 import type { ProductDraft } from "@/lib/validate";
 
@@ -173,8 +173,15 @@ function Creator({ initial }: { initial?: Initial }) {
     };
     const finish = (result: GenerateResponse) => {
       if (result.status === "ok") {
-        // The name and testimonials are the creator's own, so a new store keeps them.
-        setStore((s) => ({ name: s?.name ?? "", handle: handle || null, bio: result.store.bio, products: result.store.products, testimonials: s?.testimonials }));
+        // The name, testimonials and theme are the creator's own, so a new store keeps them.
+        setStore((s) => ({
+          name: s?.name ?? "",
+          handle: handle || null,
+          bio: result.store.bio,
+          products: result.store.products,
+          testimonials: s?.testimonials,
+          theme: s?.theme,
+        }));
         setAnswers(withAnswers);
         setEdited(false);
       } else if (fromEditor) {
@@ -272,7 +279,9 @@ function Creator({ initial }: { initial?: Initial }) {
     );
   }
 
-  const shown = generating ? { name: store?.name ?? "", handle: handle || null, bio: generating.bio ?? "", products: generating.products } : store!;
+  const shown = generating
+    ? { name: store?.name ?? "", handle: handle || null, bio: generating.bio ?? "", products: generating.products, theme: store?.theme }
+    : store!;
   const blocked = generating !== null || busyBlock !== null || publishing;
 
   return (
@@ -293,22 +302,29 @@ function Creator({ initial }: { initial?: Initial }) {
         </p>
       )}
 
-      <StoreView
-        store={shown}
-        pending={generating !== null}
-        edit={
-          generating
-            ? undefined
-            : {
-                onEdit: (block) => setSheet(block === "bio" ? { kind: "header" } : { kind: "product", index: block }),
-                onRedo: redo,
-                onTestimonial: (index) => setSheet({ kind: "testimonial", index }),
-                busy: busyBlock,
-                disabled: blocked,
-                taps: initial?.taps,
-              }
-        }
-      />
+      {!generating && store && (
+        <ThemePicker value={store.theme ?? "classic"} disabled={blocked} onChange={(theme) => setStore({ ...store, theme })} />
+      )}
+
+      {/* The preview gets the same background the public page will have. */}
+      <div style={themeVars(shown.theme) as CSSProperties} className="-mx-4 bg-(--store-bg) px-4 py-6 transition-colors">
+        <StoreView
+          store={shown}
+          pending={generating !== null}
+          edit={
+            generating
+              ? undefined
+              : {
+                  onEdit: (block) => setSheet(block === "bio" ? { kind: "header" } : { kind: "product", index: block }),
+                  onRedo: redo,
+                  onTestimonial: (index) => setSheet({ kind: "testimonial", index }),
+                  busy: busyBlock,
+                  disabled: blocked,
+                  taps: initial?.taps,
+                }
+          }
+        />
+      </div>
 
       <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-zinc-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <button type="button" onClick={redoAll} disabled={blocked} className="h-12 flex-1 rounded-xl border border-zinc-300 font-medium disabled:opacity-40">
@@ -365,5 +381,30 @@ function Creator({ initial }: { initial?: Initial }) {
       )}
       {sheet?.kind === "published" && published && <PublishedSheet slug={published.slug} token={published.token} onClose={() => setSheet(null)} />}
     </section>
+  );
+}
+
+function ThemePicker({ value, onChange, disabled }: { value: ThemeId; onChange: (theme: ThemeId) => void; disabled: boolean }) {
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-2 text-sm font-medium">Colour theme</legend>
+      <div role="radiogroup" aria-label="Colour theme" className="grid grid-cols-4 gap-2">
+        {THEME_IDS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={value === id}
+            disabled={disabled}
+            onClick={() => onChange(id)}
+            style={{ backgroundColor: THEMES[id].bg }}
+            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border text-xs font-medium disabled:opacity-40 ${value === id ? "border-zinc-900 ring-2 ring-zinc-900" : "border-zinc-300"}`}
+          >
+            <span aria-hidden className="size-5 rounded-full" style={{ backgroundColor: THEMES[id].button }} />
+            {THEMES[id].label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
   );
 }

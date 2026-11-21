@@ -159,3 +159,17 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - A request with WhatsApp's user agent gets og:title, og:description and twitter:card `summary_large_image` in the `<head>`. Both og:image and twitter:image point at `https://ai-storefront-nine.vercel.app/s/<slug>/opengraph-image` (the public domain, not a deployment URL that would need a login), and the image loads logged out.
 - One tap counted in Redis; the edit link showed "1 person tapped" on that product and "0 people tapped" on the others.
 - A real generation of case 3 still works: ok in 5.1 s, leading with a 1:1 call.
+
+## 2026-11-22 — Phase 4a (themes)
+
+### What was built
+- Four colour themes, defined once in `lib/constants.ts`: Classic (the original look), Sunset, Ocean and Forest. Each sets the page background, the button colour, the "Coming soon" accent and link colours through CSS variables; product covers keep one colour per format.
+- A row of four swatches above the editor preview. The choice is saved with the store (`theme`, missing means Classic), kept by "Redo all", and applied to the public page (full-page background) and the link-preview image.
+
+### Decisions the AI made
+- All four themes are light, so body text keeps its contrast everywhere; white button text on each theme's button colour meets the 4.5:1 minimum.
+- Choosing a theme isn't counted as an edit, so "Redo all" doesn't warn about it.
+
+### Verified locally
+- Picking Ocean in the editor changed the preview background (#eff6ff), the buttons (#1d4ed8), "Coming soon" (#0e7490) and the link; the swatches are 56 px tall.
+- Republishing saved `theme: "ocean"` in Redis; the public page and the preview image both used it, with no sideways scrolling at 375 px.

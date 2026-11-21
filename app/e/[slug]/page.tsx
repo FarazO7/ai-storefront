@@ -37,7 +37,7 @@ async function EditLoader({ params, searchParams }: Pick<PageProps<"/e/[slug]">,
     );
   }
 
-  const { name, handle, bio, products, testimonials, input } = record;
+  const { name, handle, bio, products, testimonials, theme, input } = record;
   const taps = await getTaps(slug); // read only after the token checks out
-  return <CreatorApp initial={{ store: { name, handle, bio, products, testimonials }, input, slug, token: t, taps }} />;
+  return <CreatorApp initial={{ store: { name, handle, bio, products, testimonials, theme }, input, slug, token: t, taps }} />;
 }

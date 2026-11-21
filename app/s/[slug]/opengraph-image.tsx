@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { THEMES } from "@/lib/constants";
 import { FORMATS } from "@/lib/pricing";
 import { getStore } from "@/lib/redis";
 
@@ -25,10 +26,11 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const bio = store?.bio ?? "Turn a few lines about what you do into a store you can share.";
   const initials = name.split(/\s+/).slice(0, 2).map((word) => Array.from(word)[0].toUpperCase()).join("");
   const avatar = AVATAR[Array.from(name).reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % AVATAR.length];
+  const theme = THEMES[store?.theme ?? "classic"];
 
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, backgroundColor: "#ffffff", color: "#18181b" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, backgroundColor: theme.bg, color: "#18181b" }}>
         <div style={{ display: "flex", alignItems: "center" }}>
           <div
             style={{ display: "flex", width: 128, height: 128, borderRadius: 64, backgroundColor: avatar, color: "#ffffff", fontSize: 56, alignItems: "center", justifyContent: "center", marginRight: 36 }}
@@ -37,7 +39,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: 64 }}>{name}</div>
-            <div style={{ fontSize: 28, color: "#b45309", letterSpacing: 2 }}>COMING SOON</div>
+            <div style={{ fontSize: 28, color: theme.accent, letterSpacing: 2 }}>COMING SOON</div>
           </div>
         </div>
         <div style={{ display: "flex", fontSize: 36, lineHeight: 1.4, color: "#3f3f46" }}>{bio}</div>
