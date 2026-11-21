@@ -28,6 +28,12 @@ export const LIMITS = {
   testimonials: 3,
   faqQuestion: 80,
   faqAnswer: 300,
+  tipWhat: 200,
+  tipWhen: 200,
+  tipSetup: 300,
+  trackingNote: 300,
+  policy: 1200,
+  policyAnswer: 100,
 } as const;
 
 export const DISCOUNT_TIP = "24 of 30 products in my research show a crossed-out price.";

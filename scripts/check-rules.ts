@@ -1,6 +1,6 @@
 // Self-check for the validation rules. Run: node scripts/check-rules.ts
 import assert from "node:assert/strict";
-import { checkOutput, checkProduct, findBannedClaims, fixPrice, fixRationale, truncateAtWord } from "../lib/validate.ts";
+import { checkOutput, checkPolicyDrafts, checkProduct, findBannedClaims, findGainNumbers, fixPrice, fixRationale, truncateAtWord } from "../lib/validate.ts";
 
 // Price: clamp into the band, then the nearest ...49 or ...99 inside it.
 assert.equal(fixPrice("template", 230), 249); // spec example
@@ -52,5 +52,19 @@ assert.deepEqual(checkOutput({ status: "needs_more_info", questions, reason: nul
   questions: [{ question: "What do you teach?", options: ["Yoga"] }, { question: "Who for?", options: ["Beginners"] }],
 });
 assert.equal(checkOutput({ status: "ok", questions: null, reason: null, store: { bio: "Hi", products: [product, product] } }, true, false).value, null);
+
+// "Ready to sell": no numbers about gains, but a discount amount is fine.
+assert.equal(findGainNumbers("Bump offers can bring 2x more sales"), true);
+assert.equal(findGainNumbers("It can lift sales by 20%"), true);
+assert.equal(findGainNumbers("Coupons can double your orders"), true);
+assert.equal(findGainNumbers("Offer 10% off for the first week"), false);
+assert.equal(findGainNumbers("A 15% discount for early buyers"), false);
+assert.equal(findGainNumbers("Add the ₹199 template at checkout"), false);
+
+// Policy drafts must carry the creator's contact; spacing may differ, and the last attempt adds it.
+const drafts = { terms: "Terms.", refund: "Refunds within 7 days.", privacy: "We use your email to deliver." };
+assert.equal(checkPolicyDrafts({ ...drafts, terms: "Write to 98765 43210." }, "9876543210", false).problems.length, 0);
+assert.equal(checkPolicyDrafts(drafts, "hello@example.com", false).problems.length, 1);
+assert.ok(checkPolicyDrafts(drafts, "hello@example.com", true).value!.terms.endsWith("Contact: hello@example.com"));
 
 console.log("All rule checks passed.");

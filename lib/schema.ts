@@ -127,6 +127,35 @@ export const storeSchema = z.object({
 
 export const tapRequestSchema = z.object({ slug: z.string().regex(/^[a-z0-9]{8}$/), productId: z.string().min(1).max(20) });
 
+// "Ready to sell" checklist (edit link only). Both parts need the store's edit token.
+const policyAnswer = z.string().trim().min(1, "Answer all three questions first.").max(LIMITS.policyAnswer, "Please keep each answer under 100 characters.");
+export const policyAnswersSchema = z.object({ refunds: policyAnswer, access: policyAnswer, contact: policyAnswer });
+export const checklistRequestSchema = z.discriminatedUnion("part", [
+  z.object({ part: z.literal("sell"), slug: z.string().regex(/^[a-z0-9]{8}$/), token: z.string().min(20).max(100) }),
+  z.object({ part: z.literal("policies"), slug: z.string().regex(/^[a-z0-9]{8}$/), token: z.string().min(20).max(100), answers: policyAnswersSchema }),
+]);
+
+const salesTip = z.object({
+  what: z.string().describe("What it is, max 200 characters"),
+  when: z.string().describe("When it helps, max 200 characters"),
+  setup: z.string().describe("A suggested setup for this store using its own products and prices, max 300 characters"),
+});
+export const sellChecklistSchema = z.object({
+  bumpOffer: salesTip,
+  automatedEmail: salesTip,
+  discountCoupon: salesTip,
+  metaPixel: z.string().describe("What Meta Pixel is and what it's for, max 300 characters"),
+  googleAnalytics: z.string().describe("What Google Analytics is and what it's for, max 300 characters"),
+});
+export const policyDraftsSchema = z.object({
+  terms: z.string().describe("Terms of sale, plain text, max 1,200 characters"),
+  refund: z.string().describe("Refund policy, plain text, max 1,200 characters"),
+  privacy: z.string().describe("Privacy policy, plain text, max 1,200 characters"),
+});
+export type PolicyAnswers = z.infer<typeof policyAnswersSchema>;
+export type SellChecklist = z.infer<typeof sellChecklistSchema>;
+export type PolicyDrafts = z.infer<typeof policyDraftsSchema>;
+
 export const publishRequestSchema = z.object({
   store: storeSchema,
   input: storedInputSchema,

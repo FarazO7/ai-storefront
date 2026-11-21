@@ -4,9 +4,19 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { AI_ERROR } from "./constants.ts";
 import type { Format } from "./pricing.ts";
-import { buildRegenerateMessage, buildUserMessage, SYSTEM_PROMPT } from "./prompt.ts";
-import { modelOutputSchema, modelProductSchema, type GenerateResponse, type RegenerateRequest, type StoredInput } from "./schema.ts";
-import { checkBio, checkField, checkOutput, checkProduct, type Checked, type ProductDraft } from "./validate.ts";
+import { buildPoliciesMessage, buildRegenerateMessage, buildSellChecklistMessage, buildUserMessage, CHECKLIST_PROMPT, SYSTEM_PROMPT } from "./prompt.ts";
+import {
+  modelOutputSchema,
+  modelProductSchema,
+  policyDraftsSchema,
+  sellChecklistSchema,
+  type GenerateResponse,
+  type PolicyAnswers,
+  type RegenerateRequest,
+  type Store,
+  type StoredInput,
+} from "./schema.ts";
+import { checkBio, checkField, checkOutput, checkPolicyDrafts, checkProduct, checkSellChecklist, type Checked, type ProductDraft } from "./validate.ts";
 
 const TIMEOUT_MS = 25_000;
 
@@ -159,6 +169,7 @@ async function withRetries<T, R>(
   maxOutputTokens: number,
   prompt: (problems: string[]) => string,
   accept: (output: T, lastResort: boolean) => Checked<R | null>,
+  instructions: string = SYSTEM_PROMPT,
 ): Promise<R> {
   const models = attemptModels();
   let problems: string[] = [];
@@ -166,7 +177,7 @@ async function withRetries<T, R>(
     try {
       const { output } = await generateText({
         model: openai(models[attempt]),
-        instructions: SYSTEM_PROMPT,
+        instructions,
         prompt: prompt(problems),
         output: Output.object({ schema }),
         maxOutputTokens,
@@ -205,4 +216,28 @@ export async function regenerate({ input, store, block, field }: RegenerateReque
       : { value: null, problems: [`product ${block + 1} must use a format no other product uses`] };
   });
   return { product: withId(product) };
+}
+
+/** "Ready to sell": boost-sales tips and tracking notes for a saved store. */
+export async function sellChecklist(store: Store) {
+  return withRetries(
+    "checklist",
+    sellChecklistSchema,
+    1500,
+    (problems) => buildSellChecklistMessage(store, problems),
+    (output, last) => checkSellChecklist(output, last),
+    CHECKLIST_PROMPT,
+  );
+}
+
+/** "Ready to sell": draft terms, refund and privacy policies from the creator's three answers. */
+export async function draftPolicies(store: Store, answers: PolicyAnswers) {
+  return withRetries(
+    "policies",
+    policyDraftsSchema,
+    2500,
+    (problems) => buildPoliciesMessage(store, answers, problems),
+    (output, last) => checkPolicyDrafts(output, answers.contact, last),
+    CHECKLIST_PROMPT,
+  );
 }

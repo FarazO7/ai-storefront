@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { HeaderSheet, ProductSheet, PublishedSheet, TestimonialSheet, type Field } from "@/components/EditSheets";
 import InputScreen, { type Answer, type Input, type Notice } from "@/components/InputScreen";
+import ReadyToSell from "@/components/ReadyToSell";
 import StoreView, { type Block } from "@/components/StoreView";
 import type { GenerateEvent } from "@/lib/ai";
 import { AI_ERROR, THEME_IDS, THEMES, themeVars, type ThemeId } from "@/lib/constants";
@@ -325,6 +326,8 @@ function Creator({ initial }: { initial?: Initial }) {
           }
         />
       </div>
+
+      {editLink && published && !generating && <ReadyToSell slug={published.slug} token={published.token} />}
 
       <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-zinc-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <button type="button" onClick={redoAll} disabled={blocked} className="h-12 flex-1 rounded-xl border border-zinc-300 font-medium disabled:opacity-40">

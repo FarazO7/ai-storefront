@@ -109,8 +109,9 @@ function EditorNotes({ product, taps }: { product: ViewProduct; taps?: number })
           )}
           {examples.length > 0 && (
             <ul className="list-disc pl-5">
-              {examples.map((example) => (
-                <li key={example}>{example}</li>
+              {/* The research has repeat price points (two fitness courses at ₹599), so key by position. */}
+              {examples.map((example, i) => (
+                <li key={i}>{example}</li>
               ))}
             </ul>
           )}

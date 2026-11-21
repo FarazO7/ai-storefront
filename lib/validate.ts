@@ -141,6 +141,56 @@ export function checkField(field: "bio" | "title" | "description" | "buttonLabel
   return { value, problems };
 }
 
+// "No numbers about gains" in the sales tips: multipliers, "double"/"triple" and percentages, except a discount such as "10% off".
+const GAIN_NUMBERS = /\b\d+(\.\d+)?\s*(x|times)\b|\b(double|triple)\b|\d+(\.\d+)?\s*(%|percent)(?!\s*(off|discount))/i;
+
+export function findGainNumbers(text: string): boolean {
+  return GAIN_NUMBERS.test(text);
+}
+
+type Tip = { what: string; when: string; setup: string };
+type SellChecklistDraft = { bumpOffer: Tip; automatedEmail: Tip; discountCoupon: Tip; metaPixel: string; googleAnalytics: string };
+
+export function checkSellChecklist(output: SellChecklistDraft, lastResort: boolean): Checked<SellChecklistDraft | null> {
+  const problems: string[] = [];
+  const text = (label: string, value: string, max: number) => {
+    const checked = checkText(label, value, max, lastResort, problems);
+    if (findGainNumbers(checked)) problems.push(`${label} has a number about gains; describe the benefit without numbers`);
+    return checked;
+  };
+  const tip = (name: string, t: Tip): Tip => ({
+    what: text(`${name} what`, t.what, LIMITS.tipWhat),
+    when: text(`${name} when`, t.when, LIMITS.tipWhen),
+    setup: text(`${name} setup`, t.setup, LIMITS.tipSetup),
+  });
+  const value = {
+    bumpOffer: tip("bumpOffer", output.bumpOffer),
+    automatedEmail: tip("automatedEmail", output.automatedEmail),
+    discountCoupon: tip("discountCoupon", output.discountCoupon),
+    metaPixel: text("metaPixel", output.metaPixel, LIMITS.trackingNote),
+    googleAnalytics: text("googleAnalytics", output.googleAnalytics, LIMITS.trackingNote),
+  };
+  return { value: problems.length ? null : value, problems };
+}
+
+type PolicyDraftSet = { terms: string; refund: string; privacy: string };
+const alphanumeric = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** Drafts must use the creator's contact as given (spacing and punctuation may differ). */
+export function checkPolicyDrafts(output: PolicyDraftSet, contact: string, lastResort: boolean): Checked<PolicyDraftSet | null> {
+  const problems: string[] = [];
+  const value = {
+    terms: checkText("terms", output.terms, LIMITS.policy, lastResort, problems),
+    refund: checkText("refund", output.refund, LIMITS.policy, lastResort, problems),
+    privacy: checkText("privacy", output.privacy, LIMITS.policy, lastResort, problems),
+  };
+  if (!alphanumeric(Object.values(value).join(" ")).includes(alphanumeric(contact))) {
+    if (lastResort) value.terms = `${value.terms}\n\nContact: ${contact.trim()}`;
+    else problems.push(`Include the creator's contact exactly as given: ${contact.trim()}`);
+  }
+  return { value: problems.length ? null : value, problems };
+}
+
 type ModelOutput = {
   status: "ok" | "needs_more_info" | "rejected";
   questions: { question: string; options: string[] }[] | null;

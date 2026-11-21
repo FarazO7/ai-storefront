@@ -197,3 +197,23 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 ### Verified on production
 - `node scripts/test-cases.ts https://ai-storefront-nine.vercel.app 1 3 8 10 12`: all pass. Cases 1, 3 and 8 are valid stores with 2 or 3 FAQs per product (6.3 to 7.0 s), case 10 asks follow-up questions, case 12 is rejected.
 - A store generated and published on production (case 7's input): 3 products, 6 FAQs, and the public page shows all 6 questions collapsed.
+
+## 2026-11-22 — Phase 4c ("Ready to sell" checklist)
+
+### What was built
+- A "Ready to sell" section on the edit link only, under the store preview. Visitors never see it, and nothing in it is saved.
+- Boost sales: "Make my checklist" asks the AI, in its own call, what a bump offer, an automated email and a discount coupon are, when each helps, and a suggested setup that uses this store's products and prices. The same call explains Meta Pixel and Google Analytics, each marked "Not needed to start".
+- Policies: three questions (refunds and access period as tap options, contact as a short text box), then "Draft my policies" asks the AI, in a second call, for terms, refund and privacy policies. Each draft is marked "Draft: check before use" and has a Copy button.
+- `/api/checklist` checks the edit link's token before any AI call (403 otherwise), shares the 30-per-10-minutes redo limit, and uses the same attempt order as the rest of the app: the main model, the main model again with the problems fed back, then the backup model.
+
+### Decisions the AI made
+- "No numbers about gains" is checked in code as well as in the prompt. Multipliers ("2x", "3 times"), "double", "triple" and percentages are sent back to the model, except a discount amount such as "10% off". They are never auto-fixed: if all three attempts break the rule, the creator sees "Please try again".
+- Each policy draft is capped at 1,200 characters, and the contact the creator gave must appear in at least one draft (spacing may differ). On the last attempt, a missing contact is added to the terms instead of failing.
+- The checklist reads the published store, not unsaved edits, and the section says so.
+- Two prompt fixes after the first real runs. A bump offer must be the cheaper product added to a pricier one (the first run suggested the reverse). The refund and access answers may be reworded to fit the sentence (the first run wrote "available Within 7 days").
+- Also fixed a React duplicate-key warning left from Phase 3: the research has two fitness courses at ₹599, so the "Why this price" examples are now keyed by position.
+
+### Verified locally
+- Real calls on a generated, published store (case 1's input). The checklist took 7.6 s and the policies 6.3 s. The setups used the store's own products and prices, with no numbers about gains. The contact appeared in the drafts as typed, for both an email and "WhatsApp +91 98765 43210".
+- A wrong token is refused (403, "This edit link doesn't work any more."). A blank answer is refused before any AI call (400, "Answer all three questions first.").
+- At 375 px: the tap options are 44 px tall, there's no sideways scrolling, and each draft shows its badge and Copy button.
