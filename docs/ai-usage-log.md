@@ -193,3 +193,7 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - Cases 1 and 8 pass with the stricter schema (2 or 3 FAQs each).
 - A real store's FAQs used only facts from its descriptions ("The call is 60 minutes."; "The ebook includes 30 Kerala home recipes."), and said "The creator will share details before launch" when asked about something not described.
 - At 375 px: FAQs start collapsed, each question is a 44 px tap target, removing one in the sheet removes it from the card and from the published page.
+
+### Verified on production
+- `node scripts/test-cases.ts https://ai-storefront-nine.vercel.app 1 3 8 10 12`: all pass. Cases 1, 3 and 8 are valid stores with 2 or 3 FAQs per product (6.3 to 7.0 s), case 10 asks follow-up questions, case 12 is rejected.
+- A store generated and published on production (case 7's input): 3 products, 6 FAQs, and the public page shows all 6 questions collapsed.
