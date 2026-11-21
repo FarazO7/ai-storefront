@@ -153,3 +153,9 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - Taps: two through the API and one by tapping the button in the browser were counted; an unknown product id isn't. The edit link showed the counts.
 - The editor's break-even numbers match the formula (₹99 → 6 sales, ₹599 launch price → 1, ₹199 → 3); "Based on few examples" shows only for the community product.
 - A request with WhatsApp's user agent gets og:title, og:description, og:image (absolute URL) and the twitter tags in the `<head>`; the image renders (1200×630 PNG).
+
+### Verified on production
+- A logged-out visit to a store with a launch price and a testimonial (HTTP 200): ₹599 with ₹799 crossed out and the testimonial, and none of the editor-only text.
+- A request with WhatsApp's user agent gets og:title, og:description and twitter:card `summary_large_image` in the `<head>`. Both og:image and twitter:image point at `https://ai-storefront-nine.vercel.app/s/<slug>/opengraph-image` (the public domain, not a deployment URL that would need a login), and the image loads logged out.
+- One tap counted in Redis; the edit link showed "1 person tapped" on that product and "0 people tapped" on the others.
+- A real generation of case 3 still works: ok in 5.1 s, leading with a 1:1 call.
