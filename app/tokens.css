@@ -1,0 +1,266 @@
+/* Design tokens: the only place for colours, radii, shadows, fonts and durations.
+   Components use the Tailwind utilities mapped at the bottom (bg-surface-1, text-text-2, rounded-card…). */
+
+:root {
+  /* Neutrals */
+  --gray-0: #ffffff;
+  --gray-25: #fafafa;
+  --gray-50: #f2f2f2;
+  --gray-100: #e5e5e5;
+  --gray-200: #cccccc;
+  --gray-300: #999999;
+  --gray-400: #808080;
+  --gray-500: #666666;
+  --gray-600: #4d4d4d;
+  --gray-700: #333333;
+  --gray-800: #1a1a1a;
+  --gray-850: #151515;
+  --gray-900: #0f0f0f;
+
+  /* Blue */
+  --blue-50: #e8f1ff;
+  --blue-100: #b7d4ff;
+  --blue-200: #94bfff;
+  --blue-300: #64a2ff;
+  --blue-400: #4590ff;
+  --blue-500: #1774ff;
+  --blue-600: #156ae8;
+  --blue-700: #1052b5;
+  --blue-800: #0d408c;
+  --blue-900: #0a316b;
+
+  /* Violet */
+  --violet-50: #f1e6ff;
+  --violet-100: #d4b0fd;
+  --violet-200: #bf8afd;
+  --violet-300: #a154fc;
+  --violet-400: #8f33fb;
+  --violet-500: #7300fa;
+  --violet-600: #6900e4;
+  --violet-700: #5200b2;
+  --violet-800: #3f008a;
+  --violet-900: #300069;
+
+  /* Red */
+  --red-50: #feeceb;
+  --red-100: #fac5c1;
+  --red-200: #f8a9a3;
+  --red-300: #f5827a;
+  --red-400: #f36960;
+  --red-500: #f04438;
+  --red-600: #da3e33;
+  --red-700: #aa3028;
+  --red-800: #84251f;
+  --red-900: #651d18;
+
+  /* Amber */
+  --amber-50: #fff7e9;
+  --amber-100: #fee7ba;
+  --amber-200: #fedb99;
+  --amber-300: #feca6b;
+  --amber-400: #fdc04e;
+  --amber-500: #fdb022;
+  --amber-600: #e6a01f;
+  --amber-700: #b47d18;
+  --amber-800: #8b6113;
+  --amber-900: #6a4a0e;
+
+  /* Green */
+  --green-50: #ebfbf3;
+  --green-100: #bff2d9;
+  --green-200: #a1ecc6;
+  --green-300: #76e3ac;
+  --green-400: #5bdd9c;
+  --green-500: #32d583;
+  --green-600: #2ec277;
+  --green-700: #24975d;
+  --green-800: #1c7548;
+  --green-900: #155937;
+
+  /* Surfaces */
+  --surface-1: var(--gray-0); /* page, cards, inputs */
+  --surface-1-hover: var(--gray-25); /* row and card hover */
+  --surface-2: var(--gray-50); /* subtle fills, chips, form section bands */
+  --surface-3: var(--gray-100); /* disabled input fill */
+  --surface-4: var(--gray-200);
+  --surface-5: var(--gray-300);
+  --surface-6: var(--gray-400);
+  --surface-7: var(--gray-500);
+  --surface-8: var(--gray-600);
+  --surface-9: var(--gray-700);
+  --surface-10: var(--gray-800);
+  --surface-inverted: var(--gray-900);
+  --surface-accent: var(--blue-50); /* selected cards, info callouts, icon tiles */
+  --surface-ai: var(--violet-50);
+  --surface-success-1: var(--green-50);
+  --surface-success-2: var(--green-100);
+  --surface-success-3: var(--green-500);
+  --surface-success-4: var(--green-700);
+  --surface-warning-1: var(--amber-50);
+  --surface-warning-2: var(--amber-100);
+  --surface-warning-3: var(--amber-500);
+  --surface-warning-4: var(--amber-700);
+  --surface-critical-1: var(--red-50);
+  --surface-critical-2: var(--red-100);
+  --surface-critical-3: var(--red-500);
+  --surface-critical-4: var(--red-700);
+
+  /* Text. Labels, accent and status text are a shade darker than the source palette so they pass WCAG AA. */
+  --text-1: var(--gray-900); /* primary text */
+  --text-2: var(--gray-500); /* secondary text, helper copy */
+  --text-3: #737373; /* labels: 4.7:1 on white */
+  --text-4: var(--gray-300); /* placeholders and disabled text only */
+  --text-5: var(--gray-200);
+  --text-inverted: var(--gray-0);
+  --text-accent: var(--blue-600); /* links, active tabs */
+  --text-success: var(--green-800);
+  --text-warning: var(--amber-800);
+  --text-critical: var(--red-700);
+
+  /* Strokes */
+  --stroke-primary: var(--gray-100); /* default 1px hairline */
+  --stroke-secondary: var(--gray-200); /* dashed outlines, unchecked radios */
+  --stroke-tertiary: var(--gray-300);
+  --stroke-inverted: var(--gray-700);
+  --stroke-ink: rgb(15 15 15 / 0.15); /* outlined buttons and tabs */
+  /* Ink washes for secondary and hover fills (plain rgb, so older phones without color-mix get them too) */
+  --ink-5: rgb(15 15 15 / 0.05);
+  --ink-10: rgb(15 15 15 / 0.1);
+  --ink-20: rgb(15 15 15 / 0.2);
+  --ink-25: rgb(15 15 15 / 0.25);
+  --stroke-success: var(--green-500);
+  --stroke-warning: var(--amber-500);
+  --stroke-critical: var(--red-500);
+
+  /* Fills, selected borders and focus rings */
+  --accent: var(--blue-500);
+
+  /* One-off colours */
+  --shell-bg: #0c1014; /* dark frames (device bezel) */
+  --cta-ring: linear-gradient(95deg, #1264fe, #01bbfe);
+  --ai-tint: linear-gradient(90deg, rgb(122 90 248 / 0.14), rgb(18 100 254 / 0.05) 70%, rgb(18 100 254 / 0));
+  --ai-blue: #156ae8;
+  --preview-canvas: #1a1a1a;
+  --preview-grid: rgb(255 255 255 / 0.06);
+  --skeleton: linear-gradient(0deg, #ffffff, #e3e3e3 177.27%);
+  --discount-text: #147839;
+  --suffix-chip-bg: #ededed;
+  --disabled-border: #ececec;
+  --tooltip-bg: #000000;
+  --modal-backdrop: rgb(0 0 0 / 0.9);
+  --empty-title: #4f4f4f;
+
+  /* Motion */
+  --duration-fast: 150ms; /* field borders */
+  --duration-base: 200ms; /* colour and background on pills, small lifts */
+  --duration-spring: 380ms; /* AI icon spring */
+}
+
+@theme {
+  --font-sans: var(--font-hind), Poppins, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Type scale (size / line height) */
+  --text-display: 2.5rem; /* public page title, 40/44 */
+  --text-display--line-height: 2.75rem;
+  --text-hero: 2.5rem; /* title on the gradient header, 40/38 */
+  --text-hero--line-height: 2.375rem;
+  --text-stat: 1.625rem; /* 26/38 */
+  --text-stat--line-height: 2.375rem;
+  --text-title: 1.25rem; /* 20 */
+  --text-title--line-height: 1.75rem;
+  --text-body: 1rem; /* 16/22: body copy, inputs, section headings */
+  --text-body--line-height: 1.375rem;
+  --text-ui: 0.875rem; /* 14/20: UI default */
+  --text-ui--line-height: 1.25rem;
+  --text-micro: 0.75rem; /* 12/16: badges, micro-labels */
+  --text-micro--line-height: 1rem;
+  --tracking-label: 0.01rem; /* 0.16px on uppercase section labels */
+
+  --radius-2: 2px; /* inline suffix chip */
+  --radius-4: 4px; /* thumbnails, badges, tooltips */
+  --radius-field: 5px; /* inputs */
+  --radius-6: 6px; /* card images */
+  --radius-card: 8px; /* cards, rows, callouts */
+  --radius-10: 10px; /* public share button */
+  --radius-float: 12px; /* popovers, radio cards, modals */
+  --radius-page: 16px; /* public page container */
+  --radius-device: 40px; /* phone frame in the preview */
+  --radius-pill: 999px; /* buttons, tabs, chips */
+
+  --shadow-hairline: 0 0 2px rgb(0 0 0 / 0.04);
+  --shadow-card: 0 0 6px rgb(0 0 0 / 0.04);
+  --shadow-raised: 0 4px 12px rgb(0 0 0 / 0.07), 0 2px 4px rgb(0 0 0 / 0.05);
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 0.16), 0 0 1px rgb(0 0 0 / 0.4);
+  --shadow-primary-hover: 0 12px 15px rgb(0 0 0 / 0.12);
+  --shadow-checkout: 0 5px 14px #e5e5e5, 0 2px 6px #e5e5e5;
+
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-2xl: 1400px;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Semantic colours as utilities: bg-surface-1, text-text-2, border-stroke-primary, bg-ink/10… */
+@theme inline {
+  --color-ink: var(--gray-900);
+  --color-ink-5: var(--ink-5);
+  --color-ink-10: var(--ink-10);
+  --color-ink-20: var(--ink-20);
+  --color-ink-25: var(--ink-25);
+  --color-surface-1: var(--surface-1);
+  --color-surface-1-hover: var(--surface-1-hover);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-4: var(--surface-4);
+  --color-surface-5: var(--surface-5);
+  --color-surface-6: var(--surface-6);
+  --color-surface-7: var(--surface-7);
+  --color-surface-8: var(--surface-8);
+  --color-surface-9: var(--surface-9);
+  --color-surface-10: var(--surface-10);
+  --color-surface-inverted: var(--surface-inverted);
+  --color-surface-accent: var(--surface-accent);
+  --color-surface-ai: var(--surface-ai);
+  --color-surface-success-1: var(--surface-success-1);
+  --color-surface-success-2: var(--surface-success-2);
+  --color-surface-success-3: var(--surface-success-3);
+  --color-surface-success-4: var(--surface-success-4);
+  --color-surface-warning-1: var(--surface-warning-1);
+  --color-surface-warning-2: var(--surface-warning-2);
+  --color-surface-warning-3: var(--surface-warning-3);
+  --color-surface-warning-4: var(--surface-warning-4);
+  --color-surface-critical-1: var(--surface-critical-1);
+  --color-surface-critical-2: var(--surface-critical-2);
+  --color-surface-critical-3: var(--surface-critical-3);
+  --color-surface-critical-4: var(--surface-critical-4);
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+  --color-text-5: var(--text-5);
+  --color-text-inverted: var(--text-inverted);
+  --color-text-accent: var(--text-accent);
+  --color-text-success: var(--text-success);
+  --color-text-warning: var(--text-warning);
+  --color-text-critical: var(--text-critical);
+  --color-stroke-primary: var(--stroke-primary);
+  --color-stroke-secondary: var(--stroke-secondary);
+  --color-stroke-tertiary: var(--stroke-tertiary);
+  --color-stroke-inverted: var(--stroke-inverted);
+  --color-stroke-ink: var(--stroke-ink);
+  --color-stroke-success: var(--stroke-success);
+  --color-stroke-warning: var(--stroke-warning);
+  --color-stroke-critical: var(--stroke-critical);
+  --color-accent: var(--accent);
+  --color-shell: var(--shell-bg);
+  --color-ai-blue: var(--ai-blue);
+  --color-preview-canvas: var(--preview-canvas);
+  --color-discount: var(--discount-text);
+  --color-suffix-chip: var(--suffix-chip-bg);
+  --color-disabled-border: var(--disabled-border);
+  --color-tooltip: var(--tooltip-bg);
+  --color-empty-title: var(--empty-title);
+}

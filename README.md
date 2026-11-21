@@ -45,7 +45,8 @@ A mobile-first web app for Indian creators who are new to selling online. You wr
 ## Stack
 
 - Next.js 16.4 (App Router, Cache Components), React 19.3, TypeScript
-- Tailwind CSS 4.3
+- Tailwind CSS 4.3, with design tokens in `app/tokens.css` (colours, radii, shadows, type, motion)
+- Hind Madurai (self-hosted with `next/font`) and lucide icons
 - Vercel AI SDK 7 (`ai`, `@ai-sdk/openai`) with OpenAI `gpt-6-luna` (main) and `gpt-6-sol` (backup)
 - Zod 4 for request and model-output schemas
 - Upstash Redis for stores, interest taps and rate limits (`@upstash/redis`, `@upstash/ratelimit`)
@@ -54,6 +55,7 @@ A mobile-first web app for Indian creators who are new to selling online. You wr
 ```
 app/         pages (/, /s/[slug], /e/[slug]) and API routes (generate, regenerate, publish, tap, checklist)
 components/  the form, the editor, the store view, bottom sheets
+components/ui/  the design system's parts (buttons, fields, choices, badges, callouts, modal…), shown at /styleguide
 lib/         AI calls, prompts, schemas, validation, pricing research, Redis, rate limits
 scripts/     the rule self-check and the 12-case test
 docs/        ai-usage-log.md: what was built in each phase, decisions and checks
@@ -125,7 +127,7 @@ Latest production run, 22 Nov 2026 (`node scripts/test-cases.ts`), all 12 passed
 
 ## Templates and UI kits
 
-None. The project started from `create-next-app`; its starter page and images were removed, and only the default favicon is left. There's no UI kit or component library: the layout is hand-written with Tailwind, and the avatars, product covers and link-preview images are drawn in code.
+None. The project started from `create-next-app`; its starter page and images were removed, and only the default favicon is left. There's no UI kit or component library: the layout is hand-written with Tailwind, and the avatars, product covers and link-preview images are drawn in code. Icons come from lucide; every other part is our own, and `/styleguide` shows each one in every state.
 
 ## Known limits
 

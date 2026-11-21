@@ -297,3 +297,32 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - The error page's home link does a full page load and shows the form with the saved text.
 - Redo on the creator's own idea, three rounds with real calls: every round changed the title, and two changed the format and price. One kept the description word for word even after it was sent back. With so few facts about the idea, the description often stays close to the original.
 - The name-note fix was checked locally only; it's client-side code in the same build.
+
+## 2026-11-22 — UI refresh, Phase 1 (foundations)
+
+I gave Claude Code a UI brief describing a design language (tokens, components, page patterns). It audited the repo, wrote a plan with open questions, and I approved the plan with its recommended answers.
+
+### What was built
+- Design tokens in `app/tokens.css`: colour palettes, semantic surface, text and stroke colours, radii, shadows, the type scale, breakpoints and motion. Tailwind utilities map to them (`bg-surface-1`, `text-text-2`, `rounded-card`, `shadow-popover`…).
+- Hind Madurai, self-hosted with `next/font`, and lucide-react 1.70.0 for icons (pinned to a release at least two weeks old).
+- New parts in `components/ui`:
+  - Button: 7 variants, 4 sizes plus the public call to action, icon-only and loading, and the gradient-ring create button
+  - fields with a prefix, counter and discount chip
+  - choice chips and radio cards built on native radios
+  - badge, metric chip, callout, card, skeleton, and an empty state with an original illustration
+  - modal: a bottom sheet on phones, a 500px dialog from 768px
+  - section tabs, info tooltip, the preview canvas with phone and browser frames, and an original logo mark
+- `/styleguide` shows every part in every state; hover, focus and active can be forced so they show on a phone. It's unlinked and noindex.
+- No existing screen changed. The only global changes are the keyboard focus ring and reduced-motion handling.
+
+### Decisions the AI made
+- Two pairings from the brief fell below 4.5:1 at small sizes, so the accent badge uses blue-700 and the struck price in the discount chip uses text-2.
+- Translucent ink washes are plain rgb tokens instead of Tailwind's `/10` syntax, which needs `color-mix` (missing on older phones such as iOS 15).
+- Touch screens get an invisible 44px tap area around anything smaller than 44px; medium fields are 44px tall on phones and 40px from 768px.
+- Menus aren't built yet, since no screen needs one. Sidebar, banner, switch and kebab tokens were left out because those parts don't exist here, and the pink palette was dropped, as the brief allows.
+
+### Verified locally
+- Lint, type check, rule self-check and build all pass.
+- Screenshots at 375px and 1280px: every section renders, with no sideways scrolling at 375px. Contrast was computed for every text-on-fill pairing; all are at least 4.5:1 except disabled text, which is exempt.
+- Keyboard: arrow keys move the chip choice and the tabs, the focus ring shows, Escape closes the dialog and focus returns to where it was.
+- The home page still looks as before.
