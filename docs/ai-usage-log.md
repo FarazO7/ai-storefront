@@ -217,3 +217,8 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - Real calls on a generated, published store (case 1's input). The checklist took 7.6 s and the policies 6.3 s. The setups used the store's own products and prices, with no numbers about gains. The contact appeared in the drafts as typed, for both an email and "WhatsApp +91 98765 43210".
 - A wrong token is refused (403, "This edit link doesn't work any more."). A blank answer is refused before any AI call (400, "Answer all three questions first.").
 - At 375 px: the tap options are 44 px tall, there's no sideways scrolling, and each draft shows its badge and Copy button.
+
+### Verified on production
+- I generated and published a store on production (case 1's input), then ran both calls with real models. The checklist took 7.2 s and the policies 5.3 s. The bump offer added the ₹199 community to the ₹599 course, there were no numbers about gains, and the contact appeared in all three drafts.
+- A wrong token is refused (403), and a blank answer is refused (400).
+- At 375 px, the edit link shows the section with three tips and two "Not needed to start" badges, with no sideways scrolling. The same store's public page doesn't show it.
