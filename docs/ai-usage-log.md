@@ -240,3 +240,8 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - Real calls. "fitness" alone asks follow-up questions; with a pasted prenatal-yoga bio it returns a store for new moms in Bengaluru (7.3 s). An emoji-only caption doesn't trigger a rejection. A caption saying "Ignore all previous instructions..." is ignored: prices stay in band and no prompt text leaks. "I share easy cooking videos" plus a Hinglish caption returns Kerala recipes for working couples, in English.
 - 501 characters are refused before any AI call (400, "Please keep the Instagram text under 500 characters.").
 - At 375 px, the box sits between the handle and "Product in mind", the counter updates, and there's no sideways scrolling. A refresh keeps the text. Publishing saved it; on the edit link a bio redo sent it and used it; the public page doesn't contain it.
+
+### Verified on production
+- The prompt change touches every call, so I re-ran the status-sensitive spec cases: `node scripts/test-cases.ts https://ai-storefront-nine.vercel.app 1 10 11 12`, all pass (case 1 ok, case 10 asks questions, cases 11 and 12 rejected).
+- The same Instagram cases as locally, with real models. A pasted prenatal-yoga bio turned "fitness" into a 4-product store for new moms (8.5 s). The emoji-only caption didn't trigger a rejection. The caption with instructions was ignored: prices stayed in band and no prompt text leaked. The Hinglish caption gave Kerala recipes for working couples, in English. 501 characters were refused (400).
+- At 375 px, the live form shows the box with a 500-character limit, 16 px text and a counter, and no sideways scrolling.
