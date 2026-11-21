@@ -268,3 +268,25 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - Secrets: gitleaks isn't installed, so a script searched the patches of all 15 commits (every ref; there are no stashes) for each value in `.env.local`, printing only names. None was found. The two model names appear, as expected, since they aren't secrets.
   - No OpenAI key, Upstash URL, AWS key, GitHub token, private key or bearer token appears in any commit.
   - `.env.example` is the only env file ever committed, and it has only ever held empty values plus `OPENAI_MODEL=gpt-6-luna` from Step 1. `.gitignore` has `.env*` and `!.env.example`, and `.env.local` is ignored.
+
+## 2026-11-22 — Full re-check of every test list, and five fixes
+
+### What was checked
+- I hadn't run the phone checks from the phase reports, so Claude Code ran every item from Phase 1 to Phase 6 itself. It used production in the in-app browser at 375 px, with real AI calls. That included the two items it had flagged as untested: the "Redo all" warning (checked by replacing the native confirm box) and the error page (triggered with a deliberately broken draft in the test browser).
+- Almost everything passed: streaming, editing, rewriting, redo, publishing, the edit link, taps, themes, FAQs, testimonials, launch prices, "Ready to sell", the Instagram box, follow-up questions, rejections, double taps, refreshes, the back button, 404 pages and wrong edit tokens.
+
+### Five issues found and fixed
+1. "Add more (optional)" closed itself when the last optional field was emptied, even while the creator was typing in it. It now decides open or closed once, when the form appears.
+2. Redo on the creator's own product idea returned the same description word for word. The prompt now asks for a clearly different product. Code also sends back, once, a redo that repeats the title or description; a later attempt is accepted, so Redo never fails because of this.
+3. The link-preview image garbled names in Indian scripts ("प्रिया" became "प्रयिा"), because the image library can't join their letters. Text in Indian scripts or Urdu is now left off the image, with the Instagram handle shown instead of the name when there is one.
+4. "Add your name to publish." stayed on screen after the name was added. It now clears when a name is saved.
+5. "Go to the home page" on the error page did nothing when the error happened in the editor, which lives on the home page. It now does a full page load.
+
+### Verified locally
+- The optional section stays open while a field is emptied, still closes when its heading is tapped, and starts open after a refresh when a field has text.
+- Redo on the creator's own idea, six rounds with real calls: every round changed the format and price, and all but one changed both the title and the description. With only a few facts about the idea, the model occasionally reuses one sentence.
+- Preview images: a Hindi-script name now shows "@kochi.yoga" in its place, and a Latin name still shows as before.
+- The name note disappears once a name is saved, and the error page's home link loads the form with the saved text.
+
+### Not changed
+- "Why this price" keeps explaining the AI's original price after the creator changes it. It's still accurate about the research.

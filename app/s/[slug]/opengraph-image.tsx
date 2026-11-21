@@ -20,6 +20,10 @@ const FORMAT_COLOUR: Record<string, string> = {
   package: "#7e22ce",
 };
 
+// The image library can't join the letters of Indian scripts or Urdu ("प्रिया" comes out as "प्रयिा"), so such
+// text stays off the image. WhatsApp still shows the name and bio as text under it.
+const drawable = (text: string) => !/[\u0600-\u06FF\u0900-\u0DFF]/.test(text);
+
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const store = await getStore((await params).slug);
   const name = store?.name.trim() || "Create your store";
@@ -27,6 +31,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const initials = name.split(/\s+/).slice(0, 2).map((word) => Array.from(word)[0].toUpperCase()).join("");
   const avatar = AVATAR[Array.from(name).reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % AVATAR.length];
   const theme = THEMES[store?.theme ?? "classic"];
+  const title = drawable(name) ? name : store?.handle ? `@${store.handle}` : null;
 
   return new ImageResponse(
     (
@@ -38,11 +43,11 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             {initials}
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 64 }}>{name}</div>
+            {title && <div style={{ fontSize: 64 }}>{title}</div>}
             <div style={{ fontSize: 28, color: theme.accent, letterSpacing: 2 }}>COMING SOON</div>
           </div>
         </div>
-        <div style={{ display: "flex", fontSize: 36, lineHeight: 1.4, color: "#3f3f46" }}>{bio}</div>
+        {drawable(bio) && <div style={{ display: "flex", fontSize: 36, lineHeight: 1.4, color: "#3f3f46" }}>{bio}</div>}
         <div style={{ display: "flex", gap: 16 }}>
           {(store?.products ?? []).map((product) => (
             <div key={product.id} style={{ display: "flex", padding: "12px 24px", borderRadius: 999, backgroundColor: FORMAT_COLOUR[product.format], color: "#ffffff", fontSize: 26 }}>

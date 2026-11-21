@@ -93,6 +93,8 @@ export default function InputScreen({ input, onChange, notice, busy, hasStore, o
   onBackToStore: () => void;
 }) {
   const set = (patch: Partial<Input>) => onChange({ ...input, ...patch });
+  // Open at first if an optional field already has text; after that only the creator opens or closes it.
+  const [optionalOpen] = useState(() => input.handle !== "" || input.productInMind !== "" || input.instagramText !== "");
   const pickExample = (example: (typeof EXAMPLE_INPUTS)[number]) => set({ description: example.description, followers: example.followers });
   const tooLong = input.description.length > LIMITS.description;
   const handleInvalid = input.handle.trim() !== "" && !HANDLE_PATTERN.test(input.handle.trim());
@@ -149,7 +151,7 @@ export default function InputScreen({ input, onChange, notice, busy, hasStore, o
         </div>
       </fieldset>
 
-      <details open={input.handle !== "" || input.productInMind !== "" || input.instagramText !== "" || undefined} className="rounded-xl border border-zinc-300 px-3">
+      <details open={optionalOpen || undefined} className="rounded-xl border border-zinc-300 px-3">
         <summary className="min-h-12 cursor-pointer py-3 font-medium">Add more (optional)</summary>
         <div className="flex flex-col gap-4 pb-3">
           <label className="flex flex-col gap-1">

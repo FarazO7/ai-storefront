@@ -19,6 +19,7 @@ const DRAFT_KEY = "ai-storefront:draft:v1";
 const EMPTY_INPUT: Input = { description: "", followers: null, handle: "", productInMind: "", instagramText: "" };
 const REDO_ERROR = "The AI is taking a break. Your version is unchanged; please try again.";
 const PUBLISH_ERROR = "We couldn't publish just now. Your store is still here; please try again.";
+const NAME_NEEDED = "Add your name to publish.";
 
 // Any failure, including a dropped connection or a non-JSON reply, becomes a friendly message.
 async function post<T>(url: string, body: unknown, fallback: string): Promise<T | { error: string }> {
@@ -247,7 +248,7 @@ function Creator({ initial }: { initial?: Initial }) {
   async function publish() {
     if (!store) return;
     if (!store.name.trim()) {
-      setMessage("Add your name to publish.");
+      setMessage(NAME_NEEDED);
       setSheet({ kind: "header" });
       return;
     }
@@ -346,6 +347,7 @@ function Creator({ initial }: { initial?: Initial }) {
           onRewrite={(field, draft) => rewrite("bio", field, draft)}
           onSave={(next) => {
             if (next.bio !== store.bio) setEdited(true);
+            if (next.name.trim()) setMessage((m) => (m === NAME_NEEDED ? null : m));
             setStore({ ...store, ...next });
             setSheet(null);
           }}

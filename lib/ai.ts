@@ -209,8 +209,14 @@ export async function regenerate({ input, store, block, field }: RegenerateReque
     return { bio };
   }
   const otherFormats = store.products.filter((_, i) => i !== block).map((p) => p.format);
+  const current = store.products[block];
   const product = await withRetries("redo product", modelProductSchema, 1000, prompt, (o, last) => {
     const checked = checkProduct(o, otherFormats, block, last);
+    // A redo must look different. The model tends to repeat the creator's own product idea word for word,
+    // so the same title or description is sent back once; a later attempt is accepted as it is.
+    if (checked.value && !last && (checked.value.title.trim() === current.title.trim() || checked.value.description.trim() === current.description.trim())) {
+      return { value: null, problems: [`product ${block + 1} must have a new title and a new description; don't reuse the title "${current.title}" or the current description`] };
+    }
     return checked.value || checked.problems.length
       ? checked
       : { value: null, problems: [`product ${block + 1} must use a format no other product uses`] };

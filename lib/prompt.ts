@@ -80,7 +80,7 @@ export function buildRegenerateMessage(input: StoredInput, store: StoreSnapshot,
     ? `Rewrite only the ${field} of ${target}. Keep its meaning, follow the limits above, and make it clearly different from the current text. Return it as "value".`
     : block === "bio"
       ? 'Write a new bio, max 220 characters, clearly different from the current one. Return it as "bio".'
-      : `Write one new product to replace product ${block + 1}. Use a format no other product in the store uses, don't repeat another product's title, and follow all the store rules.`;
+      : `Write one new product to replace product ${block + 1}, clearly different from the current one, with a new title, description and FAQs. If product ${block + 1} is the creator's product in mind, keep that idea but write it afresh; otherwise choose a new idea. Use a format no other product in the store uses, don't repeat another product's title, and follow all the store rules.`;
   return [buildUserMessage(input), storeData(store), `Task: ${task}`, ...(problems.length ? [repairNote(problems)] : [])].join("\n");
 }
 
