@@ -1,28 +1,52 @@
 import { Redis } from "@upstash/redis";
-import { randomInt } from "node:crypto";
-import type { Store } from "./schema.ts";
+import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+import type { Store, StoredInput } from "./schema.ts";
 
-export type StoreRecord = Store & { createdAt: string; updatedAt: string };
+// tokenHash: SHA-256 of the private edit token. The token itself is never stored.
+export type StoreRecord = Store & { input?: StoredInput; tokenHash?: string; createdAt: string; updatedAt: string };
 
 // Made per call, so a missing env var fails the request (friendly error) instead of warning at build time.
 // Reads UPSTASH_REDIS_REST_URL/TOKEN, or the KV_REST_API_URL/TOKEN names the Vercel integration adds.
 const redis = () => Redis.fromEnv();
+const key = (slug: string) => `store:${slug}`;
 
 const SLUG_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const SLUG_PATTERN = /^[a-z0-9]{8}$/;
 const newSlug = () => Array.from({ length: 8 }, () => SLUG_ALPHABET[randomInt(SLUG_ALPHABET.length)]).join("");
+const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
-export async function saveNewStore(store: Store): Promise<string> {
+function tokenMatches(token: string, tokenHash: string | undefined): boolean {
+  if (!tokenHash) return false;
+  const given = Buffer.from(hashToken(token), "hex");
+  const stored = Buffer.from(tokenHash, "hex");
+  return given.length === stored.length && timingSafeEqual(given, stored);
+}
+
+export async function createStore(store: Store, input: StoredInput): Promise<{ slug: string; token: string }> {
+  const token = randomBytes(32).toString("base64url");
   const now = new Date().toISOString();
   for (let attempt = 0; attempt < 3; attempt++) {
     const slug = newSlug();
-    const created = await redis().set(`store:${slug}`, { ...store, createdAt: now, updatedAt: now }, { nx: true });
-    if (created) return slug;
+    const created = await redis().set(key(slug), { ...store, input, tokenHash: hashToken(token), createdAt: now, updatedAt: now }, { nx: true });
+    if (created) return { slug, token };
   }
   throw new Error("No free slug after 3 tries");
 }
 
 export async function getStore(slug: string): Promise<StoreRecord | null> {
   if (!SLUG_PATTERN.test(slug)) return null;
-  return redis().get<StoreRecord>(`store:${slug}`);
+  return redis().get<StoreRecord>(key(slug));
+}
+
+export async function getStoreForEdit(slug: string, token: string): Promise<StoreRecord | null> {
+  const record = await getStore(slug);
+  return record && tokenMatches(token, record.tokenHash) ? record : null;
+}
+
+/** Republishing from an edit link keeps the same slug. Returns false when the token doesn't match. */
+export async function updateStore(slug: string, token: string, store: Store, input: StoredInput): Promise<boolean> {
+  const record = await getStoreForEdit(slug, token);
+  if (!record) return false;
+  await redis().set(key(slug), { ...store, input, tokenHash: record.tokenHash, createdAt: record.createdAt, updatedAt: new Date().toISOString() });
+  return true;
 }

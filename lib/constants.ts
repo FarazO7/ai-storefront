@@ -21,8 +21,13 @@ export const LIMITS = {
   reason: 120,
   question: 80,
   option: 30,
+  answer: 100,
   maxPrice: 100000,
 } as const;
+
+export const AI_ERROR = "The AI is taking a break. Please try again.";
+export const HANDLE_ONLY_MESSAGE = "We can't read Instagram yet. Tell us in a line what you post about.";
+export const EMPTY_INPUT_MESSAGE = "Tell us in a line or two what you do.";
 
 // Letters, numbers, dots and underscores, up to 30 characters, a leading @ allowed.
 export const HANDLE_PATTERN = /^@?[A-Za-z0-9._]{1,30}$/;

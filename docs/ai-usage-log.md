@@ -71,3 +71,34 @@
 - Delete the unused `OPENAI_key` variable in Vercel.
 - An unknown store link shows Next's default 404 text with HTTP 200 (the page streams). The friendly 404 page comes in Phase 2.
 - Test stores made during these checks are in Redis.
+
+Phase 1 on production (21 Nov): a logged-out request opened the site (HTTP 200); a real generation took 7.4 s, publishing 0.6 s and the public page 1.3 s.
+
+## 2026-11-21 — Phase 2 (must-haves)
+
+### What was built
+- **Streaming:** `/api/generate` sends one JSON event per line. Each block (the bio, then each product) is sent only after it passes the checks; the page shows skeletons, then "Still working…" after 10 s.
+- **Retries:** main model → main model again (a repair with the errors fed back after bad output, a plain retry after a timeout) → backup model (`gpt-6-sol`) → a retry screen that keeps the input. Each attempt times out at 25 s.
+- **Validation** (`lib/validate.ts`): schema, price clamp and …49/…99 rounding, lengths and duplicate formats (repair, then truncate or drop as a last resort), banned claims (never let through), rationale numbers (replaced with the research sentence). Self-check: `node scripts/check-rules.ts`.
+- **States:** follow-up questions with tap options and "Other"; rejections with three example chips; the handle-only message.
+- **Editor:** bottom sheets (the browser's `<dialog>`), "Rewrite with AI" on each text field, Redo per block, Redo all with a warning after edits, manual edits that survive block redos, a name required before Publish.
+- **Publish:** a private edit link `/e/[slug]?t=…` (only a SHA-256 hash of the token is stored, compared in constant time; edit pages send no referrer), copy buttons, WhatsApp share, republishing keeps the same link.
+- Covers drawn in code, rate limits per hashed IP (10 generations per 10 minutes, 30 redos per 10 minutes, 20 publishes per hour), input caps, a draft saved on the phone, back-button support, friendly 404 and error pages.
+- `scripts/test-cases.ts`: the 12 test cases against the live API.
+- Demo switch: `/?ff=<FORCE_FAIL_SECRET>&mode=timeout|invalid&scope=main|all`. Forced "invalid" adds a banned claim to the real model output so the checks reject it; forced timeouts wait the real 25 s. It never fakes a success.
+
+### Decisions the AI made
+- "Stream the result" and "validate before anything is shown" conflict, so whole validated blocks stream, not words.
+- Case 12's rejection reason repeated "guarantee", which failed the banned-claim check twice before the backup passed (9.7 s). One prompt line fixed it (2.2 s, first attempt).
+- "fitness" sometimes produced a store instead of questions. The prompt now prefers questions for one- or two-word inputs (2 of 2 runs asked questions afterwards).
+- Measured reasoning "low" against "none" on 2 cases: "none" showed the bio in 1.3–2.0 s instead of 3.1–4.1 s, with the same rule compliance. Kept "low" pending a product decision.
+
+### Verified locally
+- Rule self-check, lint, production build.
+- Test cases 1, 8, 9, 10, 11 and 12 passed against the local server.
+- Forced invalid output: main fails twice, backup succeeds; with scope "all", the retry screen. Forced timeouts: retries at 25.6 s and 50.6 s, then the backup's store. A wrong secret is ignored.
+- Redo bio, redo product (new format), rewrite title; publish, edit link (right and wrong token), republish (same slug), wrong token refused; the public page leaks neither the token hash nor the creator's input.
+- At 375 px: editor sheets, rewrite, redo, publish sheet, handle-only message, a 1,940-character paste, back and forward, refresh restoring the draft.
+
+### Double-check
+- Add `FORCE_FAIL_SECRET` in Vercel (Production) before recording the demo; until then the switch is off on production.

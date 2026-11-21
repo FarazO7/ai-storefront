@@ -3,12 +3,9 @@ import { FOLLOWER_IDS, HANDLE_PATTERN, LIMITS } from "./constants.ts";
 import { FORMAT_IDS } from "./pricing.ts";
 
 // What the page sends to /api/generate. Messages are shown to creators as written.
+// An empty description is allowed here: the route answers it with "rejected" without calling the model.
 export const generateRequestSchema = z.object({
-  description: z
-    .string()
-    .trim()
-    .min(1, "Tell us in a line or two what you do.")
-    .max(LIMITS.description, "Please keep it under 1,000 characters."),
+  description: z.string().trim().max(LIMITS.description, "Please keep it under 1,000 characters."),
   followers: z.enum(FOLLOWER_IDS, { error: "Pick your follower range." }),
   handle: z
     .string()
@@ -20,12 +17,31 @@ export const generateRequestSchema = z.object({
     .trim()
     .max(LIMITS.productInMind, "Please keep 'Product in mind' under 150 characters.")
     .optional(),
+  answers: z
+    .array(
+      z.object({
+        question: z.string().trim().min(1).max(120),
+        answer: z
+          .string()
+          .trim()
+          .min(1, "Answer both questions, or pick an option.")
+          .max(LIMITS.answer, "Please keep each answer under 100 characters."),
+      }),
+    )
+    .length(2)
+    .optional(),
 });
 export type GenerateRequest = z.infer<typeof generateRequestSchema>;
 
+// The creator's input as saved with a store, so the edit link can redo blocks later.
+export const storedInputSchema = generateRequestSchema
+  .omit({ handle: true })
+  .extend({ description: z.string().trim().min(1).max(LIMITS.description) });
+export type StoredInput = z.infer<typeof storedInputSchema>;
+
 // What the model must return. OpenAI strict mode allows no optional fields and no string
 // length rules, so conditional fields are nullable and lengths are enforced in code.
-const modelProduct = z.object({
+export const modelProductSchema = z.object({
   format: z.enum(FORMAT_IDS),
   title: z.string().describe("Max 75 characters: a number, a promise and who it's for; at most one emoji"),
   price: z.number().int().describe("Whole rupees, inside the format's band"),
@@ -51,13 +67,13 @@ export const modelOutputSchema = z.object({
   store: z
     .object({
       bio: z.string().describe("Max 220 characters"),
-      products: z.array(modelProduct).min(2).max(4),
+      products: z.array(modelProductSchema).min(2).max(4),
     })
     .nullable()
     .describe("Only for ok"),
 });
 
-// A store as the page holds it and /api/publish accepts it.
+// A store as the page holds it and /api/publish accepts it. Prices the creator types may sit outside the bands.
 export const productSchema = z.object({
   id: z.string().min(1).max(20),
   format: z.enum(FORMAT_IDS),
@@ -76,11 +92,43 @@ export const storeSchema = z.object({
   products: z.array(productSchema).min(2).max(4),
 });
 
+export const publishRequestSchema = z.object({
+  store: storeSchema,
+  input: storedInputSchema,
+  slug: z.string().regex(/^[a-z0-9]{8}$/).optional(),
+  token: z.string().min(20).max(100).optional(),
+});
+
+export const regenerateRequestSchema = z
+  .object({
+    input: storedInputSchema,
+    store: z.object({ bio: z.string().max(LIMITS.bio), products: z.array(productSchema).min(1).max(4) }),
+    block: z.union([z.literal("bio"), z.number().int().min(0).max(3)]),
+    // Present: rewrite one field. Absent: redo the whole block.
+    field: z.enum(["bio", "title", "description", "buttonLabel"]).optional(),
+  })
+  .refine((r) => r.field === undefined || (r.block === "bio") === (r.field === "bio"), "That field isn't part of that block.")
+  .refine((r) => r.block === "bio" || r.block < r.store.products.length, "That product doesn't exist.");
+export type RegenerateRequest = z.infer<typeof regenerateRequestSchema>;
+
+// What /api/generate finally sends ("done"); the test script checks results against this.
+export const generateResultSchema = z.discriminatedUnion("status", [
+  z.object({
+    status: z.literal("ok"),
+    store: z
+      .object({ bio: z.string().min(1).max(LIMITS.bio), products: z.array(productSchema).min(2).max(4) })
+      .refine((s) => new Set(s.products.map((p) => p.format)).size === s.products.length, "Two products share a format."),
+  }),
+  z.object({
+    status: z.literal("needs_more_info"),
+    questions: z
+      .array(z.object({ question: z.string().min(1).max(LIMITS.question), options: z.array(z.string().min(1).max(LIMITS.option)).max(4) }))
+      .length(2),
+  }),
+  z.object({ status: z.literal("rejected"), reason: z.string().min(1).max(LIMITS.reason) }),
+]);
+
 export type Product = z.infer<typeof productSchema>;
 export type Store = z.infer<typeof storeSchema>;
+export type GenerateResponse = z.infer<typeof generateResultSchema>;
 export type Question = { question: string; options: string[] };
-
-export type GenerateResponse =
-  | { status: "ok"; store: { bio: string; products: Product[] } }
-  | { status: "needs_more_info"; questions: Question[] }
-  | { status: "rejected"; reason: string };

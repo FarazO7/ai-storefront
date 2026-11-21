@@ -15,7 +15,9 @@ export default function PublicStorePage({ params }: PageProps<"/s/[slug]">) {
 }
 
 async function PublicStore({ params }: { params: Promise<{ slug: string }> }) {
-  const store = await getStore((await params).slug);
-  if (!store) notFound();
-  return <StoreView store={store} />;
+  const record = await getStore((await params).slug);
+  if (!record) notFound();
+  // Only what visitors see: never the token hash, the creator's input or the price rationale.
+  const { name, handle, bio, products } = record;
+  return <StoreView store={{ name, handle, bio, products }} />;
 }
