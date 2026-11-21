@@ -290,3 +290,10 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 
 ### Not changed
 - "Why this price" keeps explaining the AI's original price after the creator changes it. It's still accurate about the research.
+
+### Verified on production
+- The Hindi-name test store's preview image now shows "@kochi.yoga" instead of the garbled name.
+- The optional section stays open while a field is emptied.
+- The error page's home link does a full page load and shows the form with the saved text.
+- Redo on the creator's own idea, three rounds with real calls: every round changed the title, and two changed the format and price. One kept the description word for word even after it was sent back. With so few facts about the idea, the description often stays close to the original.
+- The name-note fix was checked locally only; it's client-side code in the same build.
