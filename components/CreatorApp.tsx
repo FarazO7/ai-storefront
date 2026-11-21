@@ -149,11 +149,13 @@ function Creator({ initial }: { initial?: Initial }) {
     answers: withAnswers ?? undefined,
   });
 
-  async function generate(withAnswers: Answer[] | null) {
+  // fromEditor: "Redo all" keeps the current store on screen if anything goes wrong. From the form,
+  // problems (questions, rejection, failure) show on the form, next to what the creator typed.
+  async function generate(withAnswers: Answer[] | null, fromEditor = false) {
     if (running.current) return; // no double submits
+    if (!fromEditor && edited && !window.confirm("This makes a new store and replaces your edits. Continue?")) return;
     running.current = true;
     lastAnswers.current = withAnswers;
-    const hadStore = store !== null;
     setNotice(null);
     setMessage(null);
     setSheet(null);
@@ -162,7 +164,7 @@ function Creator({ initial }: { initial?: Initial }) {
     const slowTimer = setTimeout(() => setGenerating((g) => g && { ...g, slow: true }), 10_000);
 
     const fail = (text: string) => {
-      if (hadStore) {
+      if (fromEditor) {
         setMessage(text === AI_ERROR ? "The AI is taking a break. Your store is unchanged; please try again." : text);
       } else {
         setNotice({ kind: "failed", message: text });
@@ -174,7 +176,7 @@ function Creator({ initial }: { initial?: Initial }) {
         setStore((s) => ({ name: s?.name ?? "", handle: handle || null, bio: result.store.bio, products: result.store.products }));
         setAnswers(withAnswers);
         setEdited(false);
-      } else if (hadStore) {
+      } else if (fromEditor) {
         setMessage(`${result.status === "rejected" ? result.reason : "The AI needs a little more detail."} Your store is unchanged.`);
       } else {
         setNotice(result.status === "rejected" ? { kind: "rejected", reason: result.reason } : { kind: "questions", questions: result.questions });
@@ -250,7 +252,7 @@ function Creator({ initial }: { initial?: Initial }) {
 
   function redoAll() {
     if (edited && !window.confirm("Redo all replaces your edits with a new store. Continue?")) return;
-    generate(answers);
+    generate(answers, true);
   }
 
   if (view === "input" || (!store && !generating)) {

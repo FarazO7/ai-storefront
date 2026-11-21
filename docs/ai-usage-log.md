@@ -100,5 +100,11 @@ Phase 1 on production (21 Nov): a logged-out request opened the site (HTTP 200);
 - Redo bio, redo product (new format), rewrite title; publish, edit link (right and wrong token), republish (same slug), wrong token refused; the public page leaks neither the token hash nor the creator's input.
 - At 375 px: editor sheets, rewrite, redo, publish sheet, handle-only message, a 1,940-character paste, back and forward, refresh restoring the draft.
 
+### Found by the first production run, then fixed
+- Case 11 (gibberish) came back as follow-up questions: the "prefer questions for short inputs" line had overreached. The prompt now decides rejection first and says gibberish is always rejected.
+- The script crashed when one request's connection timed out on my network; a dropped connection now fails that case instead of stopping the run.
+- Generating from the form while an older store existed showed the rejection on the old store. Problems from the form now stay on the form; only "Redo all" keeps the current store on screen. Generating from the form asks before replacing an edited store.
+- The model's own "Something else" option is dropped, since the page adds "Other".
+
 ### Double-check
 - Add `FORCE_FAIL_SECRET` in Vercel (Production) before recording the demo; until then the switch is off on production.

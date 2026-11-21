@@ -34,11 +34,17 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function generate(c: Case): Promise<{ result: GenerateResponse | null; error: string | null; seconds: number }> {
   for (;;) {
     const started = Date.now();
-    const res = await fetch(`${base}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ description: c.description, followers: c.followers }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${base}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: c.description, followers: c.followers }),
+      });
+    } catch (error) {
+      // A dropped connection fails this case instead of stopping the whole run.
+      return { result: null, error: `network: ${error instanceof Error ? (error.cause as Error)?.message ?? error.message : error}`, seconds: (Date.now() - started) / 1000 };
+    }
     if (res.status === 429) {
       const { retryAfter } = (await res.json()) as { retryAfter: number };
       console.log(`  case ${c.n}: rate-limited, waiting ${retryAfter} s…`);

@@ -36,7 +36,7 @@ assert.equal(checkProduct(product, ["ebook"], 1, true).value, null);
 assert.equal(checkProduct({ ...product, buttonLabel: "Buy now" }, [], 0, true).value?.buttonLabel, "Notify me");
 
 // A follow-up round must not ask more questions; a store with one product left fails.
-const questions = [{ question: "What do you teach?", options: ["Yoga", "Other"] }, { question: "Who for?", options: ["Beginners"] }];
+const questions = [{ question: "What do you teach?", options: ["Yoga", "Other"] }, { question: "Who for?", options: ["Beginners", "Something else"] }];
 assert.equal(checkOutput({ status: "needs_more_info", questions, reason: null, store: null }, false, true).value, null);
 assert.deepEqual(checkOutput({ status: "needs_more_info", questions, reason: null, store: null }, false, false).value, {
   status: "needs_more_info",

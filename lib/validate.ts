@@ -161,9 +161,9 @@ export function checkOutput(output: ModelOutput, lastResort: boolean, followUp: 
     if (followUp) problems.push('The creator already answered follow-up questions: return status "ok" with a store (or "rejected"), not more questions');
     const questions = (output.questions ?? []).map((q, i) => ({
       question: checkText(`question ${i + 1}`, q.question, LIMITS.question, lastResort, problems),
-      // The page adds its own "Other" choice.
+      // The page adds its own "Other" choice, so the model's catch-alls are dropped.
       options: q.options
-        .filter((option) => option.trim().toLowerCase() !== "other")
+        .filter((option) => !/^(other|others|something else|anything else)$/i.test(option.trim()))
         .map((option, j) => checkText(`question ${i + 1} option ${j + 1}`, option, LIMITS.option, lastResort, problems))
         .slice(0, 4),
     }));
