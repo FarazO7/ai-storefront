@@ -245,3 +245,25 @@ Also checked on production at 375 px: the editor via an edit link (sheets, redo,
 - The prompt change touches every call, so I re-ran the status-sensitive spec cases: `node scripts/test-cases.ts https://ai-storefront-nine.vercel.app 1 10 11 12`, all pass (case 1 ok, case 10 asks questions, cases 11 and 12 rejected).
 - The same Instagram cases as locally, with real models. A pasted prenatal-yoga bio turned "fitness" into a 4-product store for new moms (8.5 s). The emoji-only caption didn't trigger a rejection. The caption with instructions was ignored: prices stayed in band and no prompt text leaked. The Hinglish caption gave Kerala recipes for working couples, in English. 501 characters were refused (400).
 - At 375 px, the live form shows the box with a 500-character limit, 16 px text and a counter, and no sideways scrolling.
+
+## 2026-11-22 — Phase 6 (README and final checks)
+
+### What was done
+- Rewrote the README. It covers what the app is, the live URL, the features, how the AI part works, security, the stack, local setup with `.env.example`, the tests and the failure switch, the latest production run, how I used Claude Code, templates (none) and known limits.
+
+### Checks
+- Lint, type check, the rule self-check and a production build all pass (exit code 0).
+- Logged-out requests (curl, no cookies) to the production domain:
+  - The home page and public stores return 200.
+  - The link-preview image returns 200 (`image/png`).
+  - WhatsApp's crawler gets the `og:` title, description, image and type in the page head.
+  - A missing store shows "Store not found" with HTTP 200 and `noindex`, because the page streams; the README lists this as a known limit.
+- All 12 cases pass on production (`node scripts/test-cases.ts`); the table is in the README. The run paused twice for the rate limit. Case 6 took 159.3 s because my connection stalled: a function can't run past 100 s here, and a plain page request stalled the same way during the run. Re-run alone, case 6 passed in 7.0 s.
+- Failure switch:
+  - It's not active on production: requests carrying the `.env.local` secret generated normally, so `FORCE_FAIL_SECRET` is missing or different in Vercel.
+  - Shown locally instead, with a throwaway secret. In timeout mode with the main model failing, retries came at 26.6 s and 51.6 s, then the backup model wrote the store (done at 57.2 s). In invalid mode with every attempt failing, the main model, the main model again and the backup each broke a rule, and the stream ended with the friendly error at 14.9 s.
+  - In the UI at 375 px, the page showed "Taking longer than usual. Trying again…" and then the retry screen, with the creator's text still in the form.
+- Streaming on production, checked because one run delivered every block at once: with the browser's Brotli compression, the bio arrived at 1.3 s and the products at 2.3 s and 3.1 s, so compression doesn't hold the stream back. That one run was the model writing everything in a burst.
+- Secrets: gitleaks isn't installed, so a script searched the patches of all 15 commits (every ref; there are no stashes) for each value in `.env.local`, printing only names. None was found. The two model names appear, as expected, since they aren't secrets.
+  - No OpenAI key, Upstash URL, AWS key, GitHub token, private key or bearer token appears in any commit.
+  - `.env.example` is the only env file ever committed, and it has only ever held empty values plus `OPENAI_MODEL=gpt-6-luna` from Step 1. `.gitignore` has `.env*` and `!.env.example`, and `.env.local` is ignored.
