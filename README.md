@@ -92,24 +92,22 @@ To deploy, import the repo into Vercel, add Upstash from the Vercel Marketplace,
   - `scope=all` fails every attempt, so the page ends on the retry screen.
   - Without the right secret it does nothing, and it can only force failures.
 
-Latest production run, 22 Nov 2026 (`node scripts/test-cases.ts`), all 12 passed:
+Latest production run, 22 Nov 2026, after the UI refresh (`node scripts/test-cases.ts`), all 12 passed:
 
 | Case | Status | Schema valid | Prices in range | Banned claims | Latency | Result |
 |---|---|---|---|---|---|---|
-| 1 | ok | yes | yes | none | 5.9 s | PASS |
-| 2 | ok | yes | yes | none | 5.3 s | PASS |
-| 3 | ok | yes | yes | none | 9.2 s | PASS |
-| 4 | ok | yes | yes | none | 6.6 s | PASS |
-| 5 | ok | yes | yes | none | 5.5 s | PASS |
-| 6 | ok | yes | yes | none | 159.3 s* | PASS |
-| 7 | ok | yes | yes | none | 6.6 s | PASS |
-| 8 | ok | yes | yes | none | 6.4 s | PASS |
+| 1 | ok | yes | yes | none | 9.2 s | PASS |
+| 2 | ok | yes | yes | none | 6.4 s | PASS |
+| 3 | ok | yes | yes | none | 7.0 s | PASS |
+| 4 | ok | yes | yes | none | 6.8 s | PASS |
+| 5 | ok | yes | yes | none | 6.8 s | PASS |
+| 6 | ok | yes | yes | none | 6.3 s | PASS |
+| 7 | ok | yes | yes | none | 3.8 s | PASS |
+| 8 | ok | yes | yes | none | 7.6 s | PASS |
 | 9 | rejected | yes | - | none | 0.4 s | PASS |
-| 10 | needs_more_info | yes | - | none | 6.0 s | PASS |
-| 11 | rejected | yes | - | none | 1.4 s | PASS |
-| 12 | rejected | yes | - | none | 1.3 s | PASS |
-
-\* Case 6's 159 s was a stall on the tester's connection, not the app. A function can't run past 100 s here, and a plain page request stalled the same way during this run. Re-run alone, case 6 passed in 7.0 s.
+| 10 | needs_more_info | yes | - | none | 2.1 s | PASS |
+| 11 | rejected | yes | - | none | 1.2 s | PASS |
+| 12 | rejected | yes | - | none | 2.0 s | PASS |
 
 ## How I used Claude Code
 

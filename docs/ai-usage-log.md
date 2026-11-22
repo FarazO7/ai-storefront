@@ -462,3 +462,8 @@ Production build, headless Chrome:
 - Contrast passes everywhere except exempt disabled controls and the styleguide's placeholder-colour sample.
 - The phone checklist passed 10 of 10. The whole flow took 24 seconds of app time.
 - The testimonial dialog stacks over the phone sheet: "Keep it" returns to the sheet, and "Remove" removes the testimonial.
+
+### Verified on production
+- The 12 test cases passed, with latencies from 0.4 to 9.2 seconds.
+- The four widths (36 page checks), the keyboard, reduced-motion and contrast passes, and the Phase 4 page checks gave the same results as locally.
+- The testimonial dialog and the share button behave the same as locally.
