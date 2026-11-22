@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function EditPage({ params, searchParams }: PageProps<"/e/[slug]">) {
   return (
-    <main className="min-h-dvh font-sans">
+    <main className="min-h-dvh">
       <Suspense fallback={<p className="py-20 text-center text-ui text-text-2">Loading your store…</p>}>
         <EditLoader params={params} searchParams={searchParams} />
       </Suspense>

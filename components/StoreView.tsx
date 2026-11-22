@@ -1,11 +1,13 @@
 import { ChevronDown, MousePointerClick, Pencil, Plus, RefreshCw } from "lucide-react";
-import type { CSSProperties } from "react";
+import Link from "next/link";
+import type { CSSProperties, ReactNode } from "react";
+import InterestButton from "@/components/InterestButton";
+import ShareButton from "@/components/ShareButton";
 import Button from "@/components/ui/Button";
 import InfoTip from "@/components/ui/InfoTip";
 import { Badge, MetricChip } from "@/components/ui/Status";
 import { Skeleton } from "@/components/ui/Surfaces";
-import InterestButton from "@/components/InterestButton";
-import { themeVars, type ThemeId } from "@/lib/constants";
+import { AVATAR_COLOURS, COVER_COLOURS, themeVars, type ThemeId } from "@/lib/constants";
 import { CALL_RUPEES_PER_MINUTE, CREATOR_PLAN_MONTHLY_RUPEES, EXAMPLES, FORMATS, SHARE_AFTER_FEE, type Format } from "@/lib/pricing";
 
 export type ViewProduct = {
@@ -37,19 +39,6 @@ export type EditControls = {
   taps?: Record<string, number>; // only on the edit link
 };
 
-const AVATAR_COLOURS = ["bg-rose-600", "bg-amber-600", "bg-emerald-600", "bg-sky-600", "bg-violet-600", "bg-teal-600"];
-
-// Covers are drawn in code: one colour per format, with the title and format label. No images.
-const COVERS: Record<Format, string> = {
-  ebook: "from-amber-400 to-orange-600",
-  template: "from-teal-400 to-cyan-700",
-  course: "from-indigo-400 to-indigo-700",
-  workshop: "from-rose-400 to-rose-700",
-  community: "from-emerald-400 to-emerald-700",
-  call: "from-sky-400 to-blue-700",
-  package: "from-violet-400 to-purple-700",
-};
-
 const rupees = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 
 function initials(name: string): string {
@@ -57,13 +46,23 @@ function initials(name: string): string {
   return words.slice(0, 2).map((word) => Array.from(word)[0].toUpperCase()).join("") || "?";
 }
 
+function Avatar({ name, large = false }: { name: string; large?: boolean }) {
+  const colour = AVATAR_COLOURS[Array.from(name).reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % AVATAR_COLOURS.length];
+  return (
+    <div
+      aria-hidden
+      style={{ backgroundColor: colour }}
+      className={`flex shrink-0 items-center justify-center rounded-pill font-semibold text-text-inverted ${large ? "size-20 text-stat" : "size-8 text-micro"}`}
+    >
+      {initials(name)}
+    </div>
+  );
+}
 
-// Collapsible rows: a "+" that turns into "×" when open, so they look tappable (Safari's own marker is hidden).
-const summaryClass = "flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 text-sm font-medium [&::-webkit-details-marker]:hidden";
-const OpenMark = () => (
-  <span aria-hidden className="text-lg leading-none text-zinc-400 transition-transform group-open:rotate-45">
-    +
-  </span>
+const SectionLabel = ({ id, children }: { id?: string; children: ReactNode }) => (
+  <h2 id={id} className="text-ui font-medium tracking-label text-text-3 uppercase">
+    {children}
+  </h2>
 );
 
 /** Edit and Redo for one block. The block being redone shows a spinner; everything else waits. */
@@ -133,128 +132,171 @@ export function EditorNotes({ product, taps }: { product: ViewProduct; taps?: nu
   );
 }
 
-// One renderer for the editor and the public page, so creators see exactly what visitors see.
-// `slug` is set on the public page only: it makes the interest buttons count taps.
-export default function StoreView({ store, edit, pending = false, slug }: { store: ViewStore; edit?: EditControls; pending?: boolean; slug?: string }) {
+function Price({ product }: { product: ViewProduct }) {
+  const off = product.launchPrice !== undefined ? Math.round((1 - product.launchPrice / product.price) * 100) : null;
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-2">
+      {off !== null && <span className="sr-only">Launch price</span>}
+      <span className="text-title font-semibold text-text-1">{rupees(product.launchPrice ?? product.price)}</span>
+      {off !== null && (
+        <>
+          <span className="sr-only">, regular price</span>
+          <s className="text-ui text-text-3">{rupees(product.price)}</s>
+          <span className="text-ui font-medium text-discount">({off}% off)</span>
+        </>
+      )}
+    </p>
+  );
+}
+
+// One renderer for the public page and both editor previews, so creators see exactly what visitors see.
+// `slug` is set on the public page only: it makes the interest buttons count taps and the "Built with" pill a link.
+// The two-column layout follows the width the store is drawn at (a container query), not the screen, so the
+// editor's phone frame shows the phone layout and its browser frame the desktop one.
+export default function StoreView({ store, edit, pending = false, slug, shareUrl }: { store: ViewStore; edit?: EditControls; pending?: boolean; slug?: string; shareUrl?: string }) {
   const name = store.name.trim();
-  const colour = AVATAR_COLOURS[Array.from(name).reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % AVATAR_COLOURS.length];
   const testimonials = store.testimonials ?? [];
+  const pill = "tap-44 shrink-0 rounded-pill bg-surface-1 px-3 py-1.5 text-ui font-medium text-text-1";
 
   return (
-    // The theme's colours reach every child through CSS variables; the page around it paints the background.
-    <article aria-busy={pending} style={themeVars(store.theme) as CSSProperties} className="flex flex-col gap-6 break-words">
-      <header className={`flex flex-col gap-3 ${edit?.busy === "bio" ? "opacity-50" : ""}`}>
-        {edit && <BlockActions block="bio" edit={edit} />}
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div aria-hidden className={`flex size-20 items-center justify-center rounded-full text-2xl font-semibold text-white ${colour}`}>
-            {initials(name)}
-          </div>
-          {name ? (
-            <h1 className="text-2xl font-semibold">{name}</h1>
-          ) : edit ? (
-            <button type="button" onClick={() => edit.onEdit("bio")} className="min-h-11 rounded-card text-2xl font-semibold text-text-4 underline decoration-dashed">
-              Add your name
-            </button>
-          ) : (
-            <h1 className="text-2xl font-semibold text-zinc-400">Add your name</h1>
-          )}
-          {store.handle && (
-            <a href={`https://instagram.com/${store.handle}`} target="_blank" rel="noreferrer" className="flex min-h-11 items-center text-(--store-link) underline">
-              @{store.handle} on Instagram
-            </a>
-          )}
-          {store.bio ? (
-            <p className="text-zinc-700">{store.bio}</p>
-          ) : (
-            <div className="flex w-full flex-col items-center gap-2">
-              <Skeleton className="h-4 w-11/12" />
-              <Skeleton className="h-4 w-10/12" />
-              <Skeleton className="h-4 w-7/12" />
-            </div>
-          )}
-        </div>
-      </header>
+    // The theme's colours reach every child through CSS variables.
+    <article aria-busy={pending} style={themeVars(store.theme) as CSSProperties} className="@container relative min-h-full bg-(--store-bg) break-words transition-colors">
+      <div aria-hidden className="store-band absolute inset-x-0 top-0 h-40 @min-[992px]:h-[512px]" />
 
-      <ul className="flex flex-col gap-4">
-        {store.products.map((product, index) => (
-          <li
-            key={product.id ?? index}
-            className={`flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm ${edit?.busy === index ? "opacity-50" : ""}`}
+      <div className="relative mx-auto flex max-w-[1152px] items-center justify-between gap-3 px-4 py-3 @min-[992px]:px-6 @min-[992px]:py-5">
+        <div className="flex min-w-0 items-center gap-2 text-text-inverted">
+          <Avatar name={name} />
+          <span className="truncate text-ui font-medium">{name || "Your store"}</span>
+        </div>
+        {slug ? (
+          <Link href="/" className={pill}>
+            Built with AI Storefront
+          </Link>
+        ) : (
+          <span className={pill}>Built with AI Storefront</span>
+        )}
+      </div>
+
+      <div className="relative mx-auto mt-2 max-w-[1152px] rounded-t-page bg-surface-1 px-4 pt-6 pb-10 @min-[992px]:mt-4 @min-[992px]:mb-12 @min-[992px]:rounded-page @min-[992px]:p-12 @min-[992px]:shadow-raised">
+        <div className="mx-auto flex w-full max-w-[640px] flex-col gap-8 @min-[992px]:grid @min-[992px]:max-w-none @min-[992px]:grid-cols-[minmax(0,1fr)_378px] @min-[992px]:items-start @min-[992px]:gap-12">
+          <section
+            aria-label="About the creator"
+            className={`flex flex-col items-center gap-3 text-center @min-[992px]:sticky @min-[992px]:top-6 @min-[992px]:col-start-2 @min-[992px]:row-start-1 @min-[992px]:items-start @min-[992px]:rounded-float @min-[992px]:border @min-[992px]:border-stroke-primary @min-[992px]:p-6 @min-[992px]:text-left @min-[992px]:shadow-checkout ${edit?.busy === "bio" ? "opacity-50" : ""}`}
           >
-            {edit && <BlockActions block={index} edit={edit} />}
-            <div aria-hidden className={`flex h-36 flex-col justify-end rounded-xl bg-linear-to-br p-4 text-white ${COVERS[product.format]}`}>
-              <span className="text-xs font-semibold uppercase tracking-wide">{FORMATS[product.format].label}</span>
-              <span className="mt-1 line-clamp-3 text-lg leading-snug font-semibold">{product.title}</span>
-            </div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-(--store-accent)">Coming soon</p>
-            <h2 className="text-lg leading-snug font-semibold">{product.title}</h2>
-            <p className="text-sm text-zinc-500">{FORMATS[product.format].label}</p>
-            <p className="flex items-baseline gap-2">
-              {product.launchPrice !== undefined && <span className="sr-only">Launch price</span>}
-              <span className="text-xl font-semibold">{rupees(product.launchPrice ?? product.price)}</span>
-              {product.launchPrice !== undefined && (
-                <>
-                  <span className="sr-only">, regular price</span>
-                  <s className="text-zinc-500">{rupees(product.price)}</s>
-                </>
-              )}
-            </p>
-            {edit && FORMATS[product.format].lowConfidence && (
-              <span className="-mt-1">
-                <Badge tone="warning">Based on few examples</Badge>
-              </span>
-            )}
-            <p className="text-zinc-700">{product.description}</p>
-            <InterestButton label={product.buttonLabel} handle={store.handle} tap={slug && product.id ? { slug, productId: product.id } : undefined} />
-            {product.faqs && product.faqs.length > 0 && (
-              // Collapsed: visitors open only the questions they care about.
-              <div className="flex flex-col">
-                <p className="text-sm font-semibold">Questions</p>
-                {product.faqs.map((faq, j) => (
-                  <details key={j} className="group border-b border-zinc-200 last:border-b-0">
-                    <summary className={summaryClass}>
-                      <span>{faq.question}</span>
-                      <OpenMark />
-                    </summary>
-                    <p className="pb-3 text-sm text-zinc-700">{faq.answer}</p>
-                  </details>
-                ))}
+            {edit && (
+              <div className="self-stretch">
+                <BlockActions block="bio" edit={edit} />
               </div>
             )}
-            {edit && <EditorNotes product={product} taps={edit.taps && product.id ? (edit.taps[product.id] ?? 0) : undefined} />}
-          </li>
-        ))}
-        {pending && (
-          <li aria-hidden className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
-            <Skeleton className="h-36" />
-            <Skeleton className="h-5 w-2/3" />
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-12" />
-          </li>
-        )}
-      </ul>
+            <Avatar name={name} large />
+            {name ? (
+              <h1 className="text-display font-bold text-text-1">{name}</h1>
+            ) : edit ? (
+              <button type="button" onClick={() => edit.onEdit("bio")} className="min-h-11 rounded-card text-display font-bold text-text-4 underline decoration-dashed">
+                Add your name
+              </button>
+            ) : (
+              <h1 className="text-display font-bold text-text-4">Add your name</h1>
+            )}
+            {store.handle && (
+              <a href={`https://instagram.com/${store.handle}`} target="_blank" rel="noreferrer" className="flex min-h-11 items-center rounded-card text-ui font-medium text-(--store-link) underline">
+                @{store.handle} on Instagram
+              </a>
+            )}
+            {store.bio ? (
+              <p className="text-body text-text-2">{store.bio}</p>
+            ) : (
+              <div className="flex w-full flex-col items-center gap-2 @min-[992px]:items-start">
+                <Skeleton className="h-4 w-11/12" />
+                <Skeleton className="h-4 w-10/12" />
+                <Skeleton className="h-4 w-7/12" />
+              </div>
+            )}
+            {shareUrl && !pending && <ShareButton path={shareUrl} title={`${name}'s store`} />}
+          </section>
 
-      {(testimonials.length > 0 || (edit && !pending)) && (
-        <section className="flex flex-col gap-3">
-          {testimonials.length > 0 && <h2 className="text-lg font-semibold">What people say</h2>}
-          {testimonials.map((testimonial, index) => (
-            <figure key={index} className="flex flex-col gap-2 rounded-2xl border border-zinc-200 bg-white p-4">
-              <blockquote className="text-zinc-700">&ldquo;{testimonial.text}&rdquo;</blockquote>
-              <figcaption className="text-sm font-medium">{testimonial.name}</figcaption>
-              {edit && (
-                <Button variant="tertiary" size="sm" icon={<Pencil aria-hidden />} onClick={() => edit.onTestimonial(index)} disabled={edit.disabled} className="self-end">
-                  Edit
-                </Button>
-              )}
-            </figure>
-          ))}
-          {edit && testimonials.length < 3 && (
-            <Button variant="tertiary" size="lg" icon={<Plus aria-hidden />} onClick={() => edit.onTestimonial(null)} disabled={edit.disabled} className="w-full border-dashed">
-              Add a testimonial
-            </Button>
-          )}
-        </section>
-      )}
+          <div className="flex flex-col gap-8 @min-[992px]:col-start-1 @min-[992px]:row-start-1">
+            <section aria-labelledby="products-heading" className="flex flex-col gap-4">
+              <SectionLabel id="products-heading">Products</SectionLabel>
+              <ul className="flex flex-col gap-4">
+                {store.products.map((product, index) => {
+                  const [from, to] = COVER_COLOURS[product.format];
+                  return (
+                    <li
+                      key={product.id ?? index}
+                      className={`flex flex-col gap-3 rounded-float border border-stroke-primary bg-surface-1 p-4 shadow-card ${edit?.busy === index ? "opacity-50" : ""}`}
+                    >
+                      {edit && <BlockActions block={index} edit={edit} />}
+                      {/* Covers are drawn in code: one colour per format, with the title and format label. No images. */}
+                      <div aria-hidden style={{ backgroundImage: `linear-gradient(to bottom right, ${from}, ${to})` }} className="flex h-40 flex-col justify-end rounded-card p-4 text-text-inverted">
+                        <span className="text-micro font-semibold tracking-label uppercase">{FORMATS[product.format].label}</span>
+                        <span className="mt-1 line-clamp-3 text-title font-semibold">{product.title}</span>
+                      </div>
+                      <p className="text-micro font-semibold tracking-label text-(--store-accent) uppercase">Coming soon</p>
+                      <h3 className="text-title font-semibold text-text-1">{product.title}</h3>
+                      <p className="-mt-2 text-ui text-text-2">{FORMATS[product.format].label}</p>
+                      <Price product={product} />
+                      {edit && FORMATS[product.format].lowConfidence && (
+                        <span className="-mt-1">
+                          <Badge tone="warning">Based on few examples</Badge>
+                        </span>
+                      )}
+                      <p className="text-body text-text-1">{product.description}</p>
+                      <InterestButton label={product.buttonLabel} handle={store.handle} tap={slug && product.id ? { slug, productId: product.id } : undefined} />
+                      {product.faqs && product.faqs.length > 0 && (
+                        // Collapsed: visitors open only the questions they care about.
+                        <div className="flex flex-col">
+                          <p className="text-micro font-semibold tracking-label text-text-3 uppercase">Questions</p>
+                          {product.faqs.map((faq, j) => (
+                            <details key={j} className="group/faq border-b border-stroke-primary last:border-b-0">
+                              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 text-ui font-medium text-text-1 [&::-webkit-details-marker]:hidden">
+                                <span>{faq.question}</span>
+                                <ChevronDown aria-hidden className="size-4 shrink-0 text-text-3 transition-transform duration-(--duration-base) group-open/faq:rotate-180" />
+                              </summary>
+                              <p className="pb-3 text-ui text-text-2">{faq.answer}</p>
+                            </details>
+                          ))}
+                        </div>
+                      )}
+                      {edit && <EditorNotes product={product} taps={edit.taps && product.id ? (edit.taps[product.id] ?? 0) : undefined} />}
+                    </li>
+                  );
+                })}
+                {pending && (
+                  <li aria-hidden className="flex flex-col gap-3 rounded-float border border-stroke-primary bg-surface-1 p-4">
+                    <Skeleton className="h-40" />
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-12" />
+                  </li>
+                )}
+              </ul>
+            </section>
+
+            {(testimonials.length > 0 || (edit && !pending)) && (
+              <section aria-labelledby={testimonials.length > 0 ? "testimonials-heading" : undefined} aria-label={testimonials.length > 0 ? undefined : "Testimonials"} className="flex flex-col gap-4">
+                {testimonials.length > 0 && <SectionLabel id="testimonials-heading">What people say</SectionLabel>}
+                {testimonials.map((testimonial, index) => (
+                  <figure key={index} className="flex flex-col gap-2 rounded-float border border-stroke-primary bg-surface-1 p-4">
+                    <blockquote className="text-body text-text-1">&ldquo;{testimonial.text}&rdquo;</blockquote>
+                    <figcaption className="text-ui font-medium text-text-2">{testimonial.name}</figcaption>
+                    {edit && (
+                      <Button variant="tertiary" size="sm" icon={<Pencil aria-hidden />} onClick={() => edit.onTestimonial(index)} disabled={edit.disabled} className="self-end">
+                        Edit
+                      </Button>
+                    )}
+                  </figure>
+                ))}
+                {edit && testimonials.length < 3 && (
+                  <Button variant="tertiary" size="lg" icon={<Plus aria-hidden />} onClick={() => edit.onTestimonial(null)} disabled={edit.disabled} className="w-full border-dashed">
+                    Add a testimonial
+                  </Button>
+                )}
+              </section>
+            )}
+          </div>
+        </div>
+      </div>
     </article>
   );
 }

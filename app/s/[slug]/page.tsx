@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps<"/s/[slug]">): Prom
 // Cache Components: the Redis read happens per request, inside a Suspense boundary.
 export default function PublicStorePage({ params }: PageProps<"/s/[slug]">) {
   return (
-    <Suspense fallback={<main className="mx-auto w-full max-w-md px-4 py-20 text-center text-zinc-500">Loading store…</main>}>
+    <Suspense fallback={<main className="min-h-dvh"><p className="py-20 text-center text-ui text-text-2">Loading store…</p></main>}>
       <PublicStore params={params} />
     </Suspense>
   );
@@ -36,10 +36,10 @@ async function PublicStore({ params }: { params: Promise<{ slug: string }> }) {
   // Only what visitors see: never the token hash, the creator's input or the price rationale.
   const { name, handle, bio, products, testimonials, theme } = record;
   return (
-    <div style={themeVars(theme) as CSSProperties} className="min-h-dvh bg-(--store-bg)">
-      <main className="mx-auto w-full max-w-md px-4 py-6">
-        <StoreView
+    <main style={themeVars(theme) as CSSProperties} className="min-h-dvh bg-(--store-bg)">
+      <StoreView
           slug={slug}
+          shareUrl={`/s/${slug}`}
           store={{
             name,
             handle,
@@ -58,7 +58,6 @@ async function PublicStore({ params }: { params: Promise<{ slug: string }> }) {
             })),
           }}
         />
-      </main>
-    </div>
+    </main>
   );
 }

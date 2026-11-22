@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import DesktopEditor from "@/components/DesktopEditor";
 import { HeaderForm, ProductForm, PublishedSheet, TestimonialForm, type Field } from "@/components/EditSheets";
 import InputScreen, { type Answer, type Input, type Notice } from "@/components/InputScreen";
@@ -13,7 +13,7 @@ import Logo from "@/components/ui/Logo";
 import Modal from "@/components/ui/Modal";
 import { Callout } from "@/components/ui/Status";
 import type { GenerateEvent } from "@/lib/ai";
-import { AI_ERROR, themeVars } from "@/lib/constants";
+import { AI_ERROR } from "@/lib/constants";
 import type { GenerateResponse, Product, Store, StoredInput } from "@/lib/schema";
 import type { ProductDraft } from "@/lib/validate";
 
@@ -480,9 +480,9 @@ function Creator({ initial }: { initial?: Initial }) {
 
         {!generating && store && <ThemePicker value={store.theme ?? "classic"} disabled={blocked} onChange={(theme) => setStore({ ...store, theme })} />}
 
-        {/* The preview gets the same background the public page will have. */}
-        <div style={themeVars(shown.theme) as CSSProperties} className="-mx-4 bg-(--store-bg) px-4 py-6 transition-colors">
-          <StoreView store={shown} pending={generating !== null} edit={generating ? undefined : editControls} />
+        {/* The same page visitors get, edge to edge, with editing controls on each block. */}
+        <div className="-mx-4">
+          <StoreView store={shown} pending={generating !== null} edit={generating ? undefined : editControls} shareUrl={published ? `/s/${published.slug}` : undefined} />
         </div>
 
         {readyToSell}

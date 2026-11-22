@@ -12,7 +12,7 @@ export default function GlobalError({ retry }: { error: unknown; retry: () => vo
     <html lang="en">
       <body className="min-h-dvh antialiased">
         <title>Something went wrong</title>
-        <div className="flex min-h-dvh flex-col font-sans">
+        <div className="flex min-h-dvh flex-col">
           <div className="flex h-14 items-center border-b border-stroke-primary px-4 md:px-12">
             <Logo />
           </div>

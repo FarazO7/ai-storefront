@@ -1,7 +1,7 @@
 import { LoaderCircle } from "lucide-react";
 import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "tertiary" | "link" | "text" | "grey" | "ai" | "danger";
+export type ButtonVariant = "primary" | "secondary" | "tertiary" | "link" | "text" | "grey" | "ai" | "danger" | "store";
 export type ButtonSize = "xs" | "sm" | "md" | "lg" | "checkout";
 
 const BASE =
@@ -17,6 +17,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
   grey: "border-transparent bg-surface-3 text-text-1 ui-hover:bg-surface-4 ui-active:bg-surface-5 disabled:opacity-50",
   // Destructive actions: red words, a red wash on hover.
   danger: "border-transparent text-text-critical ui-hover:bg-surface-critical-1 ui-active:bg-surface-critical-2 disabled:opacity-50",
+  // The store's own theme colour (set by themeVars on the store); white text passes AA on every theme.
+  store: "border-transparent bg-(--store-button) text-text-inverted ui-hover:shadow-primary-hover ui-active:shadow-none disabled:opacity-50",
   // AI entry points: the violet-to-blue tint, a blue sparkle and a springy icon on hover.
   ai: "border-stroke-primary bg-(image:--ai-tint) text-text-1 ui-hover:bg-surface-accent ui-active:bg-surface-ai disabled:opacity-50 [&_svg]:text-ai-blue [&_svg]:transition-transform [&_svg]:duration-(--duration-spring) [&_svg]:ease-spring ui-hover:[&_svg]:-translate-y-px ui-hover:[&_svg]:rotate-12",
 };

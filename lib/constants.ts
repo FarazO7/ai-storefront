@@ -58,6 +58,21 @@ export const themeVars = (id: ThemeId = "classic"): Record<string, string> => ({
   "--store-link": THEMES[id].link,
 });
 
+// Colours drawn in code. The store page uses them as inline styles and the link-preview image needs plain values,
+// so they live here once instead of as CSS tokens.
+export const AVATAR_COLOURS = ["#e11d48", "#d97706", "#059669", "#0284c7", "#7c3aed", "#0d9488"] as const;
+export const COVER_COLOURS = {
+  ebook: ["#fbbf24", "#ea580c"],
+  template: ["#2dd4bf", "#0e7490"],
+  course: ["#818cf8", "#4338ca"],
+  workshop: ["#fb7185", "#be123c"],
+  community: ["#34d399", "#047857"],
+  call: ["#38bdf8", "#1d4ed8"],
+  package: ["#a78bfa", "#7e22ce"],
+} as const;
+/** Plain copies of the text-1, text-2 and surface-1 tokens for the link-preview image. */
+export const OG_COLOURS = { ink: "#0f0f0f", muted: "#666666", surface: "#ffffff", fade: "rgb(0 0 0 / 0.55)" } as const;
+
 export const AI_ERROR = "The AI is taking a break. Please try again.";
 export const HANDLE_ONLY_MESSAGE = "We can't read Instagram yet. Tell us in a line what you post about.";
 export const EMPTY_INPUT_MESSAGE = "Tell us in a line or two what you do.";

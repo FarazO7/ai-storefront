@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Plus, X } from "lucide-react";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import StoreView, { BlockActions, EditorNotes, type EditControls, type ViewStore } from "@/components/StoreView";
 import ThemePicker from "@/components/ThemePicker";
 import Button from "@/components/ui/Button";
@@ -10,7 +10,7 @@ import { DeviceFrame, PreviewCanvas, type Device } from "@/components/ui/Preview
 import SectionTabs from "@/components/ui/SectionTabs";
 import { Badge } from "@/components/ui/Status";
 import { Card, Skeleton } from "@/components/ui/Surfaces";
-import { themeVars, type ThemeId } from "@/lib/constants";
+import type { ThemeId } from "@/lib/constants";
 import { FORMATS } from "@/lib/pricing";
 
 type Tab = "profile" | "products" | "extras" | "sell";
@@ -178,12 +178,8 @@ export default function DesktopEditor(props: DesktopEditorProps) {
       <div className="min-h-0 overflow-y-auto">
         <PreviewCanvas device={device} onDeviceChange={setDevice}>
           <DeviceFrame device={device} url={props.publicUrl ?? "Not published yet"}>
-            {/* The same page visitors get: the theme background, then the store. */}
-            <div style={themeVars(preview.theme) as CSSProperties} className="min-h-full bg-(--store-bg) px-4 py-6">
-              <div className="mx-auto max-w-md">
-                <StoreView store={preview} pending={pending} />
-              </div>
-            </div>
+            {/* The same page visitors get. */}
+            <StoreView store={preview} pending={pending} shareUrl={props.publicUrl ? new URL(props.publicUrl).pathname : undefined} />
           </DeviceFrame>
         </PreviewCanvas>
       </div>

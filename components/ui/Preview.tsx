@@ -1,5 +1,7 @@
+"use client";
+
 import { ChevronDown } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type Device = "mobile" | "desktop";
 
@@ -36,6 +38,23 @@ export function DeviceFrame({ device, url, children }: { device: Device; url: st
       </div>
     );
   }
+  return <BrowserFrame url={url}>{children}</BrowserFrame>;
+}
+
+const LAPTOP_WIDTH = 1280;
+
+// Draws the page at a real laptop width, then zooms it to fit the frame, so the store shows its desktop layout.
+function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
+  const viewport = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setZoom(Math.min(1, entry.contentRect.width / LAPTOP_WIDTH)));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="w-full overflow-hidden rounded-float bg-surface-1 shadow-raised">
       <div aria-hidden className="flex items-center gap-2 border-b border-stroke-primary bg-surface-2 px-3 py-2">
@@ -44,7 +63,9 @@ export function DeviceFrame({ device, url, children }: { device: Device; url: st
         <span className="size-3 rounded-pill bg-stroke-success" />
         <span className="ml-2 min-w-0 flex-1 truncate rounded-pill bg-surface-1 px-3 py-1 text-micro text-text-2">{url}</span>
       </div>
-      <div className="h-[min(760px,calc(100dvh-9rem))] overflow-y-auto">{children}</div>
+      <div ref={viewport} className="h-[min(760px,calc(100dvh-9rem))] overflow-x-hidden overflow-y-auto">
+        <div style={{ width: LAPTOP_WIDTH, zoom }}>{children}</div>
+      </div>
     </div>
   );
 }

@@ -10,7 +10,7 @@ A mobile-first web app for Indian creators who are new to selling online. You wr
 - **The AI decides first:** input that's too thin ("fitness") gets 2 follow-up questions with tap options. Gibberish, emoji only, empty text or prompt injection gets a short, friendly rejection with example chips. Anything else gets a store.
 - **Generation streams:** the bio, then each product, appear as soon as each one passes the checks, with skeletons before that and "Still working…" after 10 seconds.
 - **Editor:** on a phone, the store looks exactly as the public page will, and each block has Edit (a bottom sheet) and Redo. From 992px wide it splits into a form panel and a live preview in a phone or browser frame that follows your typing. "Rewrite with AI" offers a suggestion you can use, keep yours, or try again, and "Redo all" asks before replacing your edits. You can also pick a colour theme, add testimonials, set a launch price shown next to your crossed-out regular price, and edit each product's 2 or 3 FAQs.
-- **Publish:** you get a public link (`/s/…`) with a WhatsApp link preview and a private edit link (`/e/…?t=…`). Buttons on the public page count interest taps.
+- **Publish:** you get a public link (`/s/…`) with a WhatsApp link preview and a private edit link (`/e/…?t=…`). The public page has a Share button, and from 992px wide the creator card sits beside the products. Buttons on the public page count interest taps.
 - **On the edit link only:**
   - interest taps per product
   - "Why this price": the research range and examples behind each price

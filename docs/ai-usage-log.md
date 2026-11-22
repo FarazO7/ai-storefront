@@ -385,3 +385,30 @@ Headless Chrome with real AI calls, at 375px with touch and at 1280px:
   - The browser frame, Extras and "Ready to sell" worked.
   - While generating, the status, preview skeletons and disabled footer showed.
 - No console errors and no sideways scrolling.
+
+## 2026-11-22 — UI refresh, Phase 4 (public store page)
+
+### What was built
+- **Store page:** a band in the theme colour with a dark fade and soft stripes, a top bar with the creator's name and a "Built with AI Storefront" pill that links home, and a white rounded sheet holding the page.
+  - The creator card has the avatar, name, Instagram link, bio and a Share button. It opens the phone's share sheet, or copies the link where there is none.
+  - Products sit under a "Products" label: a cover in the format's colours, "Coming soon", the title, the price with its discount, the description, Notify me and the FAQs as closed rows.
+  - Testimonials sit under "What people say".
+- **From 992px wide:** two columns, products on the left and the creator card on the right, which stays in view while scrolling.
+- **Notify me:** a full-width button in the theme colour. After a tap, a success note asks people to follow the creator on Instagram.
+- **Editor previews:** both editors render this same page. The desktop browser frame draws it at laptop width and scales it to fit, so it shows the two-column layout.
+- **Link-preview image:** the theme colour around a white card with the initials, the name, "Coming soon", the bio and a chip for each product format.
+- **Unchanged:** the API, data, tap counting, and the page titles and descriptions used for link previews.
+
+### Decisions the AI made
+- The page switches to two columns based on its own width (container queries), not the window's, so the same page works inside the editor's preview frames.
+- The theme colour fills both the band and the Notify me buttons, as agreed in the plan.
+- The body now sets the font, so pages no longer each add it.
+- The preview image keeps the image library's default font. Drawing it in Hind Madurai would mean adding the font file to the repo, which wasn't done without asking.
+
+### Verified locally
+Headless Chrome against the dev server, at 375px with touch and at 1280px, on a published store with a Hindi name:
+- **Phone:** no sideways scrolling and every tap target at least 44px. FAQs start closed, the price read "₹999 ₹1,299 (23% off)", and a tap showed the thank-you note.
+- **Phone editor:** the same page, edge to edge, with Edit and Redo on each block.
+- **Desktop:** two columns (630px and 378px), and the creator card stayed 24px from the top after scrolling.
+- **Desktop editor:** the browser frame scaled the page to 53%, with two columns and no sideways scrolling.
+- The preview image returned a PNG, and there were no console errors.

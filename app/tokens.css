@@ -149,6 +149,8 @@
   --tooltip-bg: #000000;
   --modal-backdrop: rgb(0 0 0 / 0.9);
   --empty-title: #4f4f4f;
+  --band-fade: linear-gradient(rgb(0 0 0 / 0.75) 0%, rgb(0 0 0 / 0.5) 30%, transparent 100%);
+  --band-stripes: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.08) 0 56px, transparent 56px 112px);
   /* The create page's gradient header: an original mesh. The blues behind the text stay dark enough for white text
      (measured: 16px subtitle at least 4.5:1, title at least 3:1); the pink, lavender and violet glows sit in the corners. */
   --hero-mesh:

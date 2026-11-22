@@ -1,6 +1,9 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
+import Button from "@/components/ui/Button";
+import { Callout } from "@/components/ui/Status";
 
 // On the public page, each click also counts one tap (no personal data). The editor preview passes no `tap`,
 // so creators trying their own buttons don't inflate the count.
@@ -9,23 +12,24 @@ export default function InterestButton({ label, handle, tap }: { label: string; 
 
   if (thanked) {
     return (
-      <p role="status" className="rounded-xl bg-emerald-50 p-3 text-center font-medium text-emerald-800">
+      <Callout tone="success" role="status">
         {handle ? `Thanks! Follow @${handle} for launch news` : "Thanks!"}
-      </p>
+      </Callout>
     );
   }
   return (
-    <button
-      type="button"
+    <Button
+      variant="store"
+      size="checkout"
+      iconRight={<ArrowRight aria-hidden />}
       onClick={() => {
         setThanked(true);
         if (tap) {
           void fetch("/api/tap", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(tap), keepalive: true }).catch(() => {});
         }
       }}
-      className="h-12 w-full rounded-xl bg-(--store-button) font-medium text-white active:opacity-80"
     >
       {label}
-    </button>
+    </Button>
   );
 }

@@ -36,9 +36,9 @@
 }
 
 body {
-  background: #ffffff;
-  color: #18181b;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--surface-1);
+  color: var(--text-1);
+  font-family: var(--font-sans);
 }
 
 @layer base {
@@ -104,6 +104,12 @@ body {
 
   .skeleton {
     background: var(--skeleton);
+  }
+
+  /* The top of a public store: the creator's theme colour, striped, with a dark fade behind the white top bar. */
+  .store-band {
+    background-color: var(--store-button);
+    background-image: var(--band-fade), var(--band-stripes);
   }
 
   /* The dark canvas behind the editor's live preview, with a faint grid. */

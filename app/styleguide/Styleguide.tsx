@@ -149,7 +149,7 @@ export default function Styleguide() {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 bg-surface-1 px-4 py-8 font-sans text-text-1 md:px-12">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 bg-surface-1 px-4 py-8 text-text-1 md:px-12">
       <header className="flex flex-col gap-4">
         <Logo />
         <h1 className="text-hero font-semibold">Styleguide</h1>
