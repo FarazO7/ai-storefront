@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Skeleton } from "@/components/ui/Surfaces";
 import InterestButton from "@/components/InterestButton";
 import { themeVars, type ThemeId } from "@/lib/constants";
 import { CALL_RUPEES_PER_MINUTE, CREATOR_PLAN_MONTHLY_RUPEES, EXAMPLES, FORMATS, SHARE_AFTER_FEE, type Format } from "@/lib/pricing";
@@ -53,7 +54,6 @@ function initials(name: string): string {
   return words.slice(0, 2).map((word) => Array.from(word)[0].toUpperCase()).join("") || "?";
 }
 
-const Skeleton = ({ className }: { className: string }) => <div aria-hidden className={`animate-pulse rounded-lg bg-zinc-200 ${className}`} />;
 
 // Collapsible rows: a "+" that turns into "×" when open, so they look tappable (Safari's own marker is hidden).
 const summaryClass = "flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 text-sm font-medium [&::-webkit-details-marker]:hidden";

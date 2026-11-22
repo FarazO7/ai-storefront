@@ -10,12 +10,12 @@ export function Skeleton({ circle, className = "" }: { circle?: boolean; classNa
   return <div aria-hidden className={`skeleton animate-pulse ${circle ? "rounded-pill" : "rounded-card"} ${className}`} />;
 }
 
-/** Centred illustration, title, a line of help and one action. */
-export function EmptyState({ title, children, action }: { title: ReactNode; children?: ReactNode; action?: ReactNode }) {
+/** Centred illustration, title, a line of help and one action. Level 1 is for a whole page (404, error): an h1 at title size. */
+export function EmptyState({ title, children, action, level = 2 }: { title: ReactNode; children?: ReactNode; action?: ReactNode; level?: 1 | 2 }) {
   return (
     <div className="mx-auto flex w-full max-w-[304px] flex-col items-center gap-4 text-center">
       <EmptyShop />
-      <h2 className="text-ui font-semibold text-empty-title">{title}</h2>
+      {level === 1 ? <h1 className="text-title font-semibold text-text-1">{title}</h1> : <h2 className="text-ui font-semibold text-empty-title">{title}</h2>}
       {children && <p className="text-ui text-text-2">{children}</p>}
       {action}
     </div>

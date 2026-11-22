@@ -149,6 +149,13 @@
   --tooltip-bg: #000000;
   --modal-backdrop: rgb(0 0 0 / 0.9);
   --empty-title: #4f4f4f;
+  /* The create page's gradient header: an original mesh. The blues behind the text stay dark enough for white text
+     (measured: 16px subtitle at least 4.5:1, title at least 3:1); the pink, lavender and violet glows sit in the corners. */
+  --hero-mesh:
+    radial-gradient(45% 55% at 0% 100%, rgb(255 170 235 / 0.5), transparent 70%),
+    radial-gradient(35% 50% at 100% 0%, rgb(190 200 255 / 0.45), transparent 70%),
+    radial-gradient(60% 60% at 50% 120%, rgb(122 90 248 / 0.5), transparent 70%),
+    linear-gradient(115deg, #0b1020 0%, #1636c4 35%, #1258f0 65%, #2a4fe0 100%);
 
   /* Motion */
   --duration-fast: 150ms; /* field borders */
@@ -157,7 +164,7 @@
 }
 
 @theme {
-  --font-sans: var(--font-hind), Poppins, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-hind, system-ui), Poppins, system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Type scale (size / line height) */
   --text-display: 2.5rem; /* public page title, 40/44 */

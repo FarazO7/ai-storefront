@@ -50,7 +50,8 @@ export function Input({ fieldSize = "md", invalid, prefix, suffix, counter, disa
         {...rest}
         disabled={disabled}
         aria-invalid={invalid || undefined}
-        className="h-full min-w-0 flex-1 bg-transparent text-body text-text-1 outline-none placeholder:text-text-4 disabled:cursor-not-allowed disabled:text-text-4"
+        // Runs over the frame's 1px borders, so a tap anywhere on the 44px field lands on the input.
+        className="-my-px h-[calc(100%+2px)] min-w-0 flex-1 bg-transparent text-body text-text-1 outline-none placeholder:text-text-4 disabled:cursor-not-allowed disabled:text-text-4"
       />
       {suffix}
       {counter && rest.maxLength !== undefined && (

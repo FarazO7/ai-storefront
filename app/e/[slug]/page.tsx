@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import CreatorApp from "@/components/CreatorApp";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/Surfaces";
 import { getStoreForEdit, getTaps } from "@/lib/redis";
 
 // The edit token is in the URL: send no referrer when the creator taps an outside link, and keep the page out of search.
@@ -13,8 +16,8 @@ export const metadata: Metadata = {
 
 export default function EditPage({ params, searchParams }: PageProps<"/e/[slug]">) {
   return (
-    <main className="mx-auto w-full max-w-md px-4 py-6">
-      <Suspense fallback={<p className="py-20 text-center text-zinc-500">Loading your store…</p>}>
+    <main className="min-h-dvh font-sans">
+      <Suspense fallback={<p className="py-20 text-center text-ui text-text-2">Loading your store…</p>}>
         <EditLoader params={params} searchParams={searchParams} />
       </Suspense>
     </main>
@@ -27,12 +30,19 @@ async function EditLoader({ params, searchParams }: Pick<PageProps<"/e/[slug]">,
 
   if (!record?.input || typeof t !== "string") {
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold">This edit link doesn&apos;t work</h1>
-        <p className="text-zinc-600">It may be incomplete. Open the full link you saved when you published, or make a new store.</p>
-        <Link href="/" className="flex h-12 items-center rounded-xl bg-zinc-900 px-6 font-medium text-white">
-          Make a store
-        </Link>
+      <div className="px-4 py-16">
+        <EmptyState
+          level={1}
+          title="This edit link doesn't work"
+          action={
+            <Link href="/" className={`${buttonClass({ cta: true })} pl-5`}>
+              <Plus aria-hidden className="size-4!" />
+              Make a store
+            </Link>
+          }
+        >
+          It may be incomplete. Open the full link you saved when you published, or make a new store.
+        </EmptyState>
       </div>
     );
   }

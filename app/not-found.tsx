@@ -1,13 +1,27 @@
+import { Plus } from "lucide-react";
 import Link from "next/link";
+import { buttonClass } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/Surfaces";
+import TopBar from "@/components/ui/TopBar";
 
 export default function NotFound() {
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-2xl font-semibold">This page doesn&apos;t exist</h1>
-      <p className="text-zinc-600">The link may be mistyped or out of date.</p>
-      <Link href="/" className="flex h-12 items-center rounded-xl bg-zinc-900 px-6 font-medium text-white">
-        Make your own store
-      </Link>
-    </main>
+    <div className="flex min-h-dvh flex-col font-sans">
+      <TopBar />
+      <main className="flex flex-1 items-center justify-center px-4 py-12">
+        <EmptyState
+          level={1}
+          title="This page doesn't exist"
+          action={
+            <Link href="/" className={`${buttonClass({ cta: true })} pl-5`}>
+              <Plus aria-hidden className="size-4!" />
+              Make your own store
+            </Link>
+          }
+        >
+          The link may be mistyped or out of date.
+        </EmptyState>
+      </main>
+    </div>
   );
 }

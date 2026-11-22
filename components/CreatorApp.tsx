@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties }
 import { HeaderSheet, ProductSheet, PublishedSheet, TestimonialSheet, type Field } from "@/components/EditSheets";
 import InputScreen, { type Answer, type Input, type Notice } from "@/components/InputScreen";
 import ReadyToSell from "@/components/ReadyToSell";
+import { Callout } from "@/components/ui/Status";
 import StoreView, { type Block } from "@/components/StoreView";
 import type { GenerateEvent } from "@/lib/ai";
 import { AI_ERROR, THEME_IDS, THEMES, themeVars, type ThemeId } from "@/lib/constants";
@@ -288,16 +289,16 @@ function Creator({ initial }: { initial?: Initial }) {
   const blocked = generating !== null || busyBlock !== null || publishing;
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6">
       {!editLink && (
         <button type="button" onClick={showInput} disabled={generating !== null} className="min-h-11 self-start font-medium text-sky-700 underline disabled:opacity-40">
           ← Change my details
         </button>
       )}
       {generating && (
-        <p role="status" className="rounded-xl bg-zinc-100 p-3 text-center text-zinc-700">
+        <Callout tone="ai" role="status">
           {generating.retrying ? "Taking longer than usual. Trying again…" : generating.slow ? "Still working…" : "Writing your store…"}
-        </p>
+        </Callout>
       )}
       {message && (
         <p role="alert" className="rounded-xl bg-amber-50 p-3 text-amber-900">

@@ -326,3 +326,27 @@ I gave Claude Code a UI brief describing a design language (tokens, components, 
 - Screenshots at 375px and 1280px: every section renders, with no sideways scrolling at 375px. Contrast was computed for every text-on-fill pairing; all are at least 4.5:1 except disabled text, which is exempt.
 - Keyboard: arrow keys move the chip choice and the tabs, the focus ring shows, Escape closes the dialog and focus returns to where it was.
 - The home page still looks as before.
+
+## 2026-11-22 — UI refresh, Phase 2 (create flow)
+
+### What was built
+- Home page: a slim top bar with the logo, a gradient header with the title, and the form in a card that overlaps the header's bottom edge.
+- Form: the examples are outlined chips, the description has a live counter that turns red past 1,000 characters, followers are radio cards, "Add more (optional)" is a blue expandable link, and Generate is the gradient-ring button. All logic, limits and messages are unchanged.
+- Follow-up questions use native radio chips with "Other". The rejection and failure messages are amber and red callouts, with the example chips and Try again.
+- While generating: "Writing your store…" in the AI style, over the new skeletons.
+- Both 404 pages, the bad-edit-link page and both error pages use the empty state: an original illustration, a heading, one line and an action.
+
+### Decisions the AI made
+- The brief's gradient failed contrast for white text (the subtitle measured 2.5:1 at 375px). Claude Code measured it from screenshots of the bare gradient, darkened the blues behind the text and moved the pink, lavender and violet glows to the corners. The title and subtitle now measure at least 5.7:1.
+- The new font and look apply to the create flow and the error pages; the editor and public page keep theirs until Phases 3 and 4.
+- Inputs now cover their own 1px borders, so a tap anywhere on the 44px field lands on the input.
+- The font token falls back to the system font where the self-hosted font isn't loaded (the global error page), instead of the browser's default serif.
+
+### Verified locally
+- The in-app browser was hidden, so Claude Code drove headless Chrome at 375px with touch emulation through a small DevTools-protocol script, using real AI calls:
+  - "fitness" got two follow-up questions, and answering one with "Other" produced a store that used both answers.
+  - Gibberish was rejected with the example chips.
+  - A blocked request showed the failure message with the text kept.
+  - A handle with no description showed its message and kept Generate off.
+- Both 404s, the bad edit link and the error page show their pages, and "Go to the home page" recovers from an error in the editor.
+- There's no sideways scrolling, every control is at least 44px or has a 44px touch area, and inputs are 16px.
