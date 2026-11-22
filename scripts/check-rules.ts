@@ -1,5 +1,7 @@
 // Self-check for the validation rules. Run: node scripts/check-rules.ts
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { AVATAR_COLOURS, COVER_COLOURS, OG_COLOURS, THEMES } from "../lib/constants.ts";
 import { checkOutput, checkPolicyDrafts, checkProduct, findBannedClaims, findGainNumbers, fixPrice, fixRationale, truncateAtWord } from "../lib/validate.ts";
 
 // Price: clamp into the band, then the nearest ...49 or ...99 inside it.
@@ -66,5 +68,20 @@ const drafts = { terms: "Terms.", refund: "Refunds within 7 days.", privacy: "We
 assert.equal(checkPolicyDrafts({ ...drafts, terms: "Write to 98765 43210." }, "9876543210", false).problems.length, 0);
 assert.equal(checkPolicyDrafts(drafts, "hello@example.com", false).problems.length, 1);
 assert.ok(checkPolicyDrafts(drafts, "hello@example.com", true).value!.terms.endsWith("Contact: hello@example.com"));
+
+// Store colours: the link-preview image's plain copies in lib/constants.ts must match app/tokens.css.
+const tokens = readFileSync(new URL("../app/tokens.css", import.meta.url), "utf8");
+for (const [id, theme] of Object.entries(THEMES)) {
+  const block = tokens.match(new RegExp(`\\[data-store-theme="${id}"\\] \\{([^}]*)\\}`))?.[1] ?? "";
+  for (const key of ["bg", "button", "accent", "link"] as const) assert.ok(block.includes(`--store-${key}: ${theme[key]};`), `theme ${id}: ${key}`);
+}
+for (const [format, [from, to]] of Object.entries(COVER_COLOURS)) {
+  assert.ok(tokens.includes(`[data-cover="${format}"] { --cover: linear-gradient(to bottom right, ${from}, ${to}); }`), `cover ${format}`);
+}
+AVATAR_COLOURS.forEach((colour, i) => assert.ok(tokens.includes(`--avatar-${i}: ${colour};`), `avatar ${i}`));
+assert.ok(!tokens.includes(`--avatar-${AVATAR_COLOURS.length}:`), "same number of avatar colours");
+assert.equal(tokens.match(/--gray-900: (#\w+);/)?.[1], OG_COLOURS.ink);
+assert.equal(tokens.match(/--gray-500: (#\w+);/)?.[1], OG_COLOURS.muted);
+assert.equal(tokens.match(/--gray-0: (#\w+);/)?.[1], OG_COLOURS.surface);
 
 console.log("All rule checks passed.");

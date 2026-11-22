@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense, type CSSProperties } from "react";
+import { Suspense } from "react";
 import StoreView from "@/components/StoreView";
-import { themeVars } from "@/lib/constants";
 import { getStore } from "@/lib/redis";
 
 // Link previews (WhatsApp, X and others). The image comes from opengraph-image.tsx next to this file.
@@ -36,7 +35,7 @@ async function PublicStore({ params }: { params: Promise<{ slug: string }> }) {
   // Only what visitors see: never the token hash, the creator's input or the price rationale.
   const { name, handle, bio, products, testimonials, theme } = record;
   return (
-    <main style={themeVars(theme) as CSSProperties} className="min-h-dvh bg-(--store-bg)">
+    <main data-store-theme={theme ?? "classic"} className="min-h-dvh bg-(--store-bg)">
       <StoreView
           slug={slug}
           shareUrl={`/s/${slug}`}

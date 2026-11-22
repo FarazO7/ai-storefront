@@ -1,13 +1,13 @@
 import { ChevronDown, MousePointerClick, Pencil, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import InterestButton from "@/components/InterestButton";
 import ShareButton from "@/components/ShareButton";
 import Button from "@/components/ui/Button";
 import InfoTip from "@/components/ui/InfoTip";
 import { Badge, MetricChip } from "@/components/ui/Status";
 import { Skeleton } from "@/components/ui/Surfaces";
-import { AVATAR_COLOURS, COVER_COLOURS, themeVars, type ThemeId } from "@/lib/constants";
+import { AVATAR_COLOURS, type ThemeId } from "@/lib/constants";
 import { CALL_RUPEES_PER_MINUTE, CREATOR_PLAN_MONTHLY_RUPEES, EXAMPLES, FORMATS, SHARE_AFTER_FEE, type Format } from "@/lib/pricing";
 
 export type ViewProduct = {
@@ -47,11 +47,11 @@ function initials(name: string): string {
 }
 
 function Avatar({ name, large = false }: { name: string; large?: boolean }) {
-  const colour = AVATAR_COLOURS[Array.from(name).reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % AVATAR_COLOURS.length];
+  const index = Array.from(name).reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % AVATAR_COLOURS.length;
   return (
     <div
       aria-hidden
-      style={{ backgroundColor: colour }}
+      style={{ backgroundColor: `var(--avatar-${index})` }}
       className={`flex shrink-0 items-center justify-center rounded-pill font-semibold text-text-inverted ${large ? "size-20 text-stat" : "size-8 text-micro"}`}
     >
       {initials(name)}
@@ -102,7 +102,8 @@ export function EditorNotes({ product, taps }: { product: ViewProduct; taps?: nu
         About {sales} {sales === 1 ? "sale" : "sales"} a month at this price would cover SuperProfile&apos;s {rupees(CREATOR_PLAN_MONTHLY_RUPEES)} Creator plan, after its 5% fee.
       </p>
       <details className="group/why">
-        <summary className="flex min-h-11 w-fit cursor-pointer list-none items-center gap-1 rounded-card font-medium text-text-accent [&::-webkit-details-marker]:hidden">
+        {/* Ink, not accent blue: blue text on the grey box is under 4.5:1. */}
+        <summary className="flex min-h-11 w-fit cursor-pointer list-none items-center gap-1 rounded-card font-medium text-text-1 [&::-webkit-details-marker]:hidden">
           Why this price
           <ChevronDown aria-hidden className="size-4 transition-transform duration-(--duration-base) group-open/why:rotate-180" />
         </summary>
@@ -160,7 +161,7 @@ export default function StoreView({ store, edit, pending = false, slug, shareUrl
 
   return (
     // The theme's colours reach every child through CSS variables.
-    <article aria-busy={pending} style={themeVars(store.theme) as CSSProperties} className="@container relative min-h-full bg-(--store-bg) break-words transition-colors">
+    <article aria-busy={pending} data-store-theme={store.theme ?? "classic"} className="@container relative min-h-full bg-(--store-bg) break-words transition-colors duration-(--duration-base)">
       <div aria-hidden className="store-band absolute inset-x-0 top-0 h-40 @min-[992px]:h-[512px]" />
 
       <div className="relative mx-auto flex max-w-[1152px] items-center justify-between gap-3 px-4 py-3 @min-[992px]:px-6 @min-[992px]:py-5">
@@ -220,7 +221,6 @@ export default function StoreView({ store, edit, pending = false, slug, shareUrl
               <SectionLabel id="products-heading">Products</SectionLabel>
               <ul className="flex flex-col gap-4">
                 {store.products.map((product, index) => {
-                  const [from, to] = COVER_COLOURS[product.format];
                   return (
                     <li
                       key={product.id ?? index}
@@ -228,7 +228,7 @@ export default function StoreView({ store, edit, pending = false, slug, shareUrl
                     >
                       {edit && <BlockActions block={index} edit={edit} />}
                       {/* Covers are drawn in code: one colour per format, with the title and format label. No images. */}
-                      <div aria-hidden style={{ backgroundImage: `linear-gradient(to bottom right, ${from}, ${to})` }} className="flex h-40 flex-col justify-end rounded-card p-4 text-text-inverted">
+                      <div aria-hidden data-cover={product.format} className="store-cover flex h-40 flex-col justify-end rounded-card p-4 text-text-inverted">
                         <span className="text-micro font-semibold tracking-label uppercase">{FORMATS[product.format].label}</span>
                         <span className="mt-1 line-clamp-3 text-title font-semibold">{product.title}</span>
                       </div>

@@ -23,7 +23,14 @@ export default function ShareButton({ path, title }: { path: string; title: stri
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <Button variant="tertiary" size="lg" icon={state === "copied" ? <Check aria-hidden /> : <Link2 aria-hidden />} onClick={share} className="w-full">
+      {/* The brief's public share button: 58px tall, 10px corners and a light border, unlike the pill buttons */}
+      <Button
+        variant="tertiary"
+        size="lg"
+        icon={state === "copied" ? <Check aria-hidden /> : <Link2 aria-hidden />}
+        onClick={share}
+        className="h-[58px]! w-full rounded-10! border-stroke-primary!"
+      >
         {state === "copied" ? "Link copied" : "Share this store"}
       </Button>
       {state === "failed" && <p className="text-ui text-text-2">Couldn&apos;t copy. Copy the address from your browser bar.</p>}

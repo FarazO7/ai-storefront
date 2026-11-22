@@ -15,7 +15,7 @@ const drawable = (text: string) => !/[؀-ۿऀ-෿]/.test(text);
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const store = await getStore((await params).slug);
-  const name = store?.name.trim() || "Create your store";
+  const name = store?.name.trim() || "Create Your Store";
   const bio = store?.bio ?? "Turn a few lines about what you do into a store you can share.";
   const initials = name.split(/\s+/).slice(0, 2).map((word) => Array.from(word)[0].toUpperCase()).join("");
   const avatar = AVATAR_COLOURS[Array.from(name).reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % AVATAR_COLOURS.length];

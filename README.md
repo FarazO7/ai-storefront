@@ -141,6 +141,7 @@ None. The project started from `create-next-app`; its starter page and images we
 - **No Instagram reading:** the handle is only shown as a link, and pasted text is the only Instagram signal.
 - **Saved input is fixed:** on the edit link, the original description and follower range can't be changed. "Redo all" uses what was saved when the store was published.
 - **Drafts stay on one device:** before publishing, drafts live in the browser's local storage.
+- **Edit-link changes need Publish:** changes made on the edit link aren't saved until you publish, and leaving the page first loses them without a warning.
 - **Preview images skip Indian scripts:** the image library can't join the letters of Indian scripts or Urdu, so a name or bio written in them is left off the link-preview image. The Instagram handle shows instead of the name when there is one, and WhatsApp still shows the name and bio as text under the image.
 - **Missing stores return 200:** a link to a store that doesn't exist shows a friendly "Store not found" page, but with HTTP 200 rather than 404, because the page streams. Search engines are told not to index it (`noindex`).
 - **Checklist isn't saved:** "Ready to sell" results are written fresh each time, and the policies are drafts to check, not legal advice.

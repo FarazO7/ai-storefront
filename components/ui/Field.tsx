@@ -9,7 +9,7 @@ export function Field({ label, htmlFor, required, hint, error, children }: { lab
       <label htmlFor={htmlFor} className="text-ui text-text-1">
         {label}
         {required && (
-          <span aria-hidden className="text-stroke-critical">
+          <span aria-hidden className="text-text-critical">
             {" "}*
           </span>
         )}

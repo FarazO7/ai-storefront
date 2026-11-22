@@ -39,8 +39,8 @@ export const LIMITS = {
 
 export const DISCOUNT_TIP = "24 of 30 products in my research show a crossed-out price.";
 
-// Colour themes, picked in the editor and saved with the store. Covers keep one colour per format.
-// White button text on each `button` colour meets the 4.5:1 contrast minimum.
+// Colour themes, picked in the editor and saved with the store. Pages take these colours from app/tokens.css;
+// the values here are plain copies for the link-preview image, and scripts/check-rules.ts checks they match.
 export const THEMES = {
   classic: { label: "Classic", bg: "#ffffff", button: "#18181b", accent: "#b45309", link: "#0369a1" },
   sunset: { label: "Sunset", bg: "#fff7ed", button: "#c2410c", accent: "#be123c", link: "#c2410c" },
@@ -50,16 +50,7 @@ export const THEMES = {
 export const THEME_IDS = ["classic", "sunset", "ocean", "forest"] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
-/** CSS variables for a theme; components read them as bg-(--store-bg), text-(--store-accent) and so on. */
-export const themeVars = (id: ThemeId = "classic"): Record<string, string> => ({
-  "--store-bg": THEMES[id].bg,
-  "--store-button": THEMES[id].button,
-  "--store-accent": THEMES[id].accent,
-  "--store-link": THEMES[id].link,
-});
-
-// Colours drawn in code. The store page uses them as inline styles and the link-preview image needs plain values,
-// so they live here once instead of as CSS tokens.
+// Plain copies of the avatar and cover tokens for the link-preview image (pages use --avatar-N and data-cover).
 export const AVATAR_COLOURS = ["#e11d48", "#d97706", "#059669", "#0284c7", "#7c3aed", "#0d9488"] as const;
 export const COVER_COLOURS = {
   ebook: ["#fbbf24", "#ea580c"],

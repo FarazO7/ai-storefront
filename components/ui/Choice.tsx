@@ -25,7 +25,7 @@ export function ChoiceChips<T extends string>({ name, legend, hideLegend, option
         {options.map((option) => (
           <label
             key={option.value}
-            className={`tap-44 inline-flex cursor-pointer items-center rounded-pill border border-stroke-ink bg-surface-1 px-5 py-[7px] text-ui font-medium text-text-1 transition-[background-color,color,translate] duration-(--duration-base) ui-hover:bg-ink-5 ui-active:translate-y-px ui-active:bg-ink-10 has-checked:border-transparent has-checked:bg-ink has-checked:text-text-inverted has-disabled:cursor-not-allowed has-disabled:opacity-50 ${FOCUS}`}
+            className={`tap-44 inline-flex cursor-pointer items-center rounded-pill border border-stroke-ink bg-surface-1 px-5 py-[7px] text-ui font-medium text-text-1 transition-[background-color,color,translate] duration-(--duration-base) ui-hover:bg-ink-5 motion-safe:ui-active:translate-y-px ui-active:bg-ink-10 has-checked:border-transparent has-checked:bg-ink has-checked:text-text-inverted has-disabled:cursor-not-allowed has-disabled:opacity-50 ${FOCUS}`}
           >
             <input type="radio" className="sr-only" name={name} value={option.value} checked={value === option.value} onChange={() => onChange(option.value)} />
             {option.label}

@@ -205,7 +205,8 @@ export default function Styleguide() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {SHADOWS.map(([token, className]) => (
             <Sample key={token} caption={token}>
-              <span className={`block h-16 w-full rounded-card bg-surface-1 ${className}`} />
+              {/* Room below for the shadow, so it doesn't sit behind the caption */}
+              <span className={`mb-6 block h-16 w-full rounded-card bg-surface-1 ${className}`} />
             </Sample>
           ))}
         </div>
@@ -225,6 +226,7 @@ export default function Styleguide() {
                     data-state={state === "hover" || state === "focus" || state === "active" ? state : undefined}
                     disabled={state === "disabled"}
                     loading={state === "loading"}
+                    className="mb-5"
                   >
                     {variant === "ai" ? "Rewrite with AI" : "Button"}
                   </Button>
@@ -364,7 +366,7 @@ export default function Styleguide() {
           <Callout
             title="Info"
             action={
-              <a href="#" className="font-medium text-text-accent underline">
+              <a href="#" className="tap-44 font-medium text-text-1 underline">
                 Learn more
               </a>
             }

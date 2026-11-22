@@ -65,7 +65,7 @@ function TextField({ label, value, onChange, max, multiline = false, onRewrite }
                   setSuggestion(null);
                 }}
               >
-                Use this
+                Use This
               </Button>
               <Button variant="tertiary" size="xs" onClick={rewrite} loading={busy}>
                 Try again

@@ -170,7 +170,40 @@
   --modal-backdrop: rgb(0 0 0 / 0.9);
 }
 
+/* Creator store colours: a theme per store (data-store-theme), a cover per product format (data-cover) and six
+   avatar colours. White text meets 4.5:1 on every button and avatar colour. The link-preview image can't read CSS,
+   so lib/constants.ts keeps plain copies, and scripts/check-rules.ts checks that the two match. */
+[data-store-theme="classic"] { --store-bg: #ffffff; --store-button: #18181b; --store-accent: #b45309; --store-link: #0369a1; }
+[data-store-theme="sunset"] { --store-bg: #fff7ed; --store-button: #c2410c; --store-accent: #be123c; --store-link: #c2410c; }
+[data-store-theme="ocean"] { --store-bg: #eff6ff; --store-button: #1d4ed8; --store-accent: #0e7490; --store-link: #1d4ed8; }
+[data-store-theme="forest"] { --store-bg: #f0fdf4; --store-button: #15803d; --store-accent: #a16207; --store-link: #15803d; }
+/* A dark fade behind the white title on every cover. Worked out for the lightest case (the ebook cover, with a
+   three-line title): white text stays above 5:1 everywhere text can sit. */
+:root {
+  --cover-fade: linear-gradient(to top, rgb(0 0 0 / 0.5) 0%, rgb(0 0 0 / 0.42) 80%, rgb(0 0 0 / 0) 100%);
+}
+[data-cover="ebook"] { --cover: linear-gradient(to bottom right, #fbbf24, #ea580c); }
+[data-cover="template"] { --cover: linear-gradient(to bottom right, #2dd4bf, #0e7490); }
+[data-cover="course"] { --cover: linear-gradient(to bottom right, #818cf8, #4338ca); }
+[data-cover="workshop"] { --cover: linear-gradient(to bottom right, #fb7185, #be123c); }
+[data-cover="community"] { --cover: linear-gradient(to bottom right, #34d399, #047857); }
+[data-cover="call"] { --cover: linear-gradient(to bottom right, #38bdf8, #1d4ed8); }
+[data-cover="package"] { --cover: linear-gradient(to bottom right, #a78bfa, #7e22ce); }
+:root {
+  --avatar-0: #e11d48;
+  --avatar-1: #d97706;
+  --avatar-2: #059669;
+  --avatar-3: #0284c7;
+  --avatar-4: #7c3aed;
+  --avatar-5: #0d9488;
+}
+
 @theme {
+  /* Tailwind's own palette, radii and shadows are off, so only the tokens below and in @theme inline exist. */
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+
   --font-sans: var(--font-hind, system-ui), Poppins, system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Type scale (size / line height) */

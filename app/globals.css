@@ -43,7 +43,7 @@ body {
 
 @layer base {
   /* Keyboard focus: a 2px accent ring with a 2px gap. Fields show focus with their border instead. */
-  :is(:focus-visible, [data-state~="focus"]):not(input, textarea, select, [data-field]) {
+  :is(:focus-visible, [data-state~="focus"]):not(input, textarea, [data-field]) {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
@@ -107,7 +107,10 @@ body {
   }
 
   /* The top of a public store: the creator's theme colour, striped, with a dark fade behind the white top bar. */
-  .store-band {
+  .store-cover {
+  background-image: var(--cover-fade), var(--cover);
+}
+.store-band {
     background-color: var(--store-button);
     background-image: var(--band-fade), var(--band-stripes);
   }

@@ -23,7 +23,7 @@ export default function ErrorPage({ error, retry }: { error: unknown; retry: () 
           action={
             <div className="flex w-full flex-col gap-2">
               <Button size="lg" className="w-full" onClick={() => retry()}>
-                Try again
+                Try Again
               </Button>
               {/* A full page load: the editor lives on the home page, so a client-side link would leave this error showing. */}
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}

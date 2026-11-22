@@ -15,7 +15,7 @@ export default function StoreNotFound() {
           action={
             <Link href="/" className={`${buttonClass({ cta: true })} pl-5`}>
               <Plus aria-hidden className="size-4!" />
-              Make your own store
+              Make Your Own Store
             </Link>
           }
         >

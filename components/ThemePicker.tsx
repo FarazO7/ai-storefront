@@ -9,13 +9,12 @@ export default function ThemePicker({ value, onChange, disabled }: { value: Them
         {THEME_IDS.map((id) => (
           <label key={id} className="flex cursor-pointer flex-col items-center gap-1.5 text-micro font-medium text-text-1 has-disabled:cursor-not-allowed has-disabled:opacity-50">
             <input type="radio" name="theme" value={id} checked={value === id} onChange={() => onChange(id)} className="peer sr-only" />
-            {/* Swatch colours are the theme's own data, so they're set inline. */}
             <span
               aria-hidden
-              style={{ backgroundColor: THEMES[id].bg }}
-              className="flex h-12 w-full items-center justify-center rounded-card border border-stroke-secondary transition-shadow duration-(--duration-base) peer-checked:border-ink peer-checked:ring-1 peer-checked:ring-ink peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"
+              data-store-theme={id}
+              className="flex h-12 w-full items-center justify-center rounded-card border border-stroke-secondary bg-(--store-bg) transition-shadow duration-(--duration-base) peer-checked:border-ink peer-checked:ring-1 peer-checked:ring-ink peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"
             >
-              <span className="size-5 rounded-pill" style={{ backgroundColor: THEMES[id].button }} />
+              <span className="size-5 rounded-pill bg-(--store-button)" />
             </span>
             {THEMES[id].label}
           </label>

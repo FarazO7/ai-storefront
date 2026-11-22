@@ -21,7 +21,7 @@ type Published = { slug: string; token: string };
 type Generating = { bio: string | null; products: ProductDraft[]; retrying: boolean; slow: boolean };
 type Sheet = { kind: "header" } | { kind: "product"; index: number } | { kind: "testimonial"; index: number | null } | { kind: "published" } | null;
 type Draft = { input: Input; answers: Answer[] | null; store: Store | null; edited: boolean; published: Published | null };
-type Confirm = { title: string; body: string; confirmLabel: string; onConfirm: () => void };
+type Confirm = { title: string; body: string; confirmLabel: string; onConfirm: () => void; cancelLabel?: string; danger?: boolean };
 
 const DRAFT_KEY = "ai-storefront:draft:v1";
 const EMPTY_INPUT: Input = { description: "", followers: null, handle: "", productInMind: "", instagramText: "" };
@@ -182,7 +182,7 @@ function Creator({ initial }: { initial?: Initial }) {
   async function generate(withAnswers: Answer[] | null, fromEditor = false, confirmed = false) {
     if (running.current) return; // no double submits
     if (!fromEditor && edited && !confirmed) {
-      setConfirm({ title: "Replace your edits?", body: "This makes a new store and replaces your edits.", confirmLabel: "Make a new store", onConfirm: () => generate(withAnswers, false, true) });
+      setConfirm({ title: "Replace your edits?", body: "This makes a new store and replaces your edits.", confirmLabel: "Make a New Store", onConfirm: () => generate(withAnswers, false, true) });
       return;
     }
     running.current = true;
@@ -301,10 +301,11 @@ function Creator({ initial }: { initial?: Initial }) {
       footer={
         <>
           <Button variant="text" size="sm" onClick={() => setConfirm(null)}>
-            Keep my edits
+            {confirm.cancelLabel ?? "Keep my edits"}
           </Button>
           <Button
             size="sm"
+            variant={confirm.danger ? "danger" : "primary"}
             onClick={() => {
               setConfirm(null);
               confirm.onConfirm();
@@ -426,10 +427,18 @@ function Creator({ initial }: { initial?: Initial }) {
           onRemove={
             index === null
               ? undefined
-              : () => {
-                  setStore({ ...store, testimonials: (store.testimonials ?? []).filter((_, i) => i !== index) });
-                  closeSheet();
-                }
+              : () =>
+                  setConfirm({
+                    title: "Remove this testimonial?",
+                    body: "It comes off your store, and you'd have to type it again to get it back.",
+                    confirmLabel: "Remove",
+                    cancelLabel: "Keep it",
+                    danger: true,
+                    onConfirm: () => {
+                      setStore({ ...store, testimonials: (store.testimonials ?? []).filter((_, i) => i !== index) });
+                      closeSheet();
+                    },
+                  })
           }
         />
       ),

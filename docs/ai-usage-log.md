@@ -412,3 +412,53 @@ Headless Chrome against the dev server, at 375px with touch and at 1280px, on a 
 - **Desktop:** two columns (630px and 378px), and the creator card stayed 24px from the top after scrolling.
 - **Desktop editor:** the browser frame scaled the page to 53%, with two columns and no sideways scrolling.
 - The preview image returned a PNG, and there were no console errors.
+
+## 2026-11-22 — UI refresh, Phase 5 (QA)
+
+### What was checked
+- **Widths:** every page at 375, 768, 1024 and 1440px. That covers the create form, a public store, the edit link, both 404s, a broken edit link, the error page and `/styleguide`. Checked: sideways scrolling, tap targets under 44px on touch widths, input text under 16px, console errors, plus a screenshot of each.
+- **Keyboard only:** Tab through the create form, a public store, a 404 and both editors, checking that every stop shows focus. Also the follower radios and the section tabs with arrow keys, FAQs with Enter, and a form dialog's focus trap, Escape and focus return.
+- **Reduced motion:** with the setting on, nothing on any page animates or transitions.
+- **Contrast:** text measured against the pixels behind it on the main pages at 375 and 1440px. Every piece of text was hidden, the bare page screenshotted, and each text line compared with what's behind it. The four themes and seven covers were also worked out by calculation.
+- **Tokens:** no colour values outside `app/tokens.css`, apart from the preview image's checked copies. Tailwind's own palette, radii and shadows are switched off, and the compiled CSS was compared before and after: no class the app uses stopped working.
+- **Reruns:** the rule self-check, the 12 test cases on production, and the phone checklist (all 10 items, automated at 375px with real AI calls).
+
+### What was fixed
+- **Store colours are tokens now:** the 4 themes, 7 covers and 6 avatar colours moved into `app/tokens.css`, as the plan said. The preview image keeps plain copies, and the rule self-check fails if the two drift apart.
+- **Desktop editor focus:** opening a form moves focus to Back, and closing it returns focus to the button that opened it. Before, focus dropped to the page, and the list jumped back to the top.
+- **Focus ring:** the preview's Mobile/Desktop switch now shows it.
+- **Reduced motion** also turns off the press and hover moves on buttons and chips.
+- **Contrast:**
+  - Product covers get a dark fade behind their white titles. The lightest cover measured 2:1 before.
+  - "Why this price" uses ink instead of blue on its grey box (it measured 4.40:1).
+  - The required-field star uses the darker red.
+- **Broken edit link:** it gets the same top bar and centred layout as the 404 pages.
+- **Title Case** for the page title and the main buttons whose wording the original spec doesn't fix: "Create Your Store", "Make Your Own Store", "Make a Store", "Try Again", "Use This", "Make a New Store".
+- **Share button:** it now matches the brief, at 58px tall with 10px corners and a light border.
+- **Removing a testimonial** now asks first, in the in-page dialog, with a red "Remove".
+- **Styleguide:** the demo link gets a 44px tap area, and captions sit clear of the shadows above them.
+
+### Decisions the AI made
+- On grey or tinted boxes, links and disclosures use ink rather than accent blue. Blue measured 4.33 to 4.40:1 there, and the brief's section 9 sets 4.5:1. The required star uses red-700 rather than red-500 for the same reason.
+- The cover fade was worked out for the worst case: the ebook cover with a three-line title. There, white text stays above 5:1.
+- Selects no longer opt out of the focus ring: the only one is a toolbar switch, not a text field.
+
+### Gaps against the brief
+- **Not built, by the plan's answers:**
+  - the sidebar and bottom tab bar (a slim top bar instead)
+  - stat cards and the collapsing header
+  - tables and their toolbars
+  - checkout fields and buyer Q&A
+  - the fixed bottom bar on the phone store page
+  - dark mode
+- **Adapted:** the store page's sticky column is the creator card, not a checkout card. The editor footer holds Redo all and Publish, and wording the original spec fixed stays as it was.
+- **SuperProfile's name** stays in the break-even line, in the pricing research in `lib/pricing.ts`, and in one line each of the README and this log (plan answer 7).
+- **Open: the exit guard (brief 6.2).** Back or Cancel on a form drops unsaved typing without asking. On the edit link, changes aren't saved until Publish, so leaving the page first loses them without a warning.
+
+### Verified locally
+Production build, headless Chrome:
+- All four widths are clean, and every keyboard stop shows focus.
+- Nothing moves with reduced motion on.
+- Contrast passes everywhere except exempt disabled controls and the styleguide's placeholder-colour sample.
+- The phone checklist passed 10 of 10. The whole flow took 24 seconds of app time.
+- The testimonial dialog stacks over the phone sheet: "Keep it" returns to the sheet, and "Remove" removes the testimonial.

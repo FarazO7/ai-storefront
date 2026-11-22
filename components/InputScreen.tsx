@@ -90,7 +90,7 @@ export default function InputScreen({ input, onChange, notice, busy, hasStore, o
       <div className="bg-(image:--hero-mesh) pb-16 text-text-inverted">
         <TopBar onHero />
         <div className="mx-auto flex max-w-xl flex-col items-center gap-3 px-4 pt-6 text-center md:pt-10">
-          <h1 className="text-hero font-semibold">Create your store</h1>
+          <h1 className="text-hero font-semibold">Create Your Store</h1>
           <p className="text-body">Write a few lines about what you do. AI drafts products and prices you can edit and share.</p>
         </div>
       </div>
@@ -195,7 +195,7 @@ export default function InputScreen({ input, onChange, notice, busy, hasStore, o
               role="alert"
               action={
                 <Button size="sm" onClick={onRetry} disabled={!canGenerate}>
-                  Try again
+                  Try Again
                 </Button>
               }
             >

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Plus, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import StoreView, { BlockActions, EditorNotes, type EditControls, type ViewStore } from "@/components/StoreView";
 import ThemePicker from "@/components/ThemePicker";
 import Button from "@/components/ui/Button";
@@ -54,6 +54,15 @@ export default function DesktopEditor(props: DesktopEditorProps) {
     ...(props.readyToSell ? [{ value: "sell" as const, label: "Ready to sell" }] : []),
   ];
   const testimonials = store.testimonials ?? [];
+  const formOpen = form !== null;
+  const formView = useRef<HTMLDivElement>(null);
+  const opener = useRef<Element | null>(null);
+
+  // Keyboard focus follows the panel: to Back when a form opens, then back to the button that opened it.
+  useEffect(() => {
+    if (formOpen) formView.current?.querySelector("button")?.focus();
+    else if (opener.current instanceof HTMLElement) opener.current.focus();
+  }, [formOpen]);
 
   return (
     <div className="grid h-dvh grid-cols-[minmax(420px,43%)_1fr]">
@@ -64,8 +73,8 @@ export default function DesktopEditor(props: DesktopEditorProps) {
           <p className="min-w-0 truncate text-ui font-medium">{store.name.trim() || "Your store"}</p>
         </header>
 
-        {form ? (
-          <>
+        {form && (
+          <div ref={formView} className="flex min-h-0 flex-1 flex-col">
             <div className="flex shrink-0 items-center gap-2 border-b border-stroke-primary py-2 pr-4 pl-2">
               <Button variant="text" size="sm" icon={<ArrowLeft aria-hidden />} onClick={form.onCancel}>
                 Back
@@ -76,103 +85,103 @@ export default function DesktopEditor(props: DesktopEditorProps) {
               {status}
               {form.node}
             </div>
-          </>
-        ) : (
-          <>
-            <div className="shrink-0 px-2">
-              <SectionTabs id="editor" label="Editor sections" tabs={tabs} value={tab} onChange={setTab} />
-            </div>
-            <div role="tabpanel" id={`editor-panel-${tab}`} aria-labelledby={`editor-tab-${tab}`} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-6">
-              {status}
-
-              {tab === "profile" && (
-                <>
-                  <SectionHeading>Name and bio</SectionHeading>
-                  <Card className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <Label>Name</Label>
-                      <p className="text-ui">{store.name.trim() || <span className="text-text-3">Not added yet. You need one to publish.</span>}</p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <Label>Bio</Label>
-                      {store.bio ? <p className="text-ui text-text-2">{store.bio}</p> : <Skeleton className="h-10 w-full" />}
-                    </div>
-                    {store.handle && (
-                      <div className="flex flex-col gap-1">
-                        <Label>Instagram</Label>
-                        <p className="text-ui text-text-2">@{store.handle}</p>
-                      </div>
-                    )}
-                    <BlockActions block="bio" edit={edit} align="start" />
-                  </Card>
-                </>
-              )}
-
-              {tab === "products" && (
-                <>
-                  <SectionHeading>Products</SectionHeading>
-                  {store.products.map((product, index) => (
-                    <Card key={product.id ?? index} className={`flex flex-col gap-3 ${edit.busy === index ? "opacity-60" : ""}`}>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Label>{FORMATS[product.format].label}</Label>
-                        {FORMATS[product.format].lowConfidence && <Badge tone="warning">Based on few examples</Badge>}
-                      </div>
-                      <p className="text-body font-semibold">{product.title}</p>
-                      <p className="flex items-baseline gap-2 text-ui">
-                        <span className="font-semibold">{rupees(product.launchPrice ?? product.price)}</span>
-                        {product.launchPrice !== undefined && <s className="text-text-3">{rupees(product.price)}</s>}
-                      </p>
-                      <p className="line-clamp-2 text-ui text-text-2">{product.description}</p>
-                      {!pending && <EditorNotes product={product} taps={edit.taps && product.id ? (edit.taps[product.id] ?? 0) : undefined} />}
-                      {!pending && <BlockActions block={index} edit={edit} align="start" />}
-                    </Card>
-                  ))}
-                  {pending && (
-                    <Card className="flex flex-col gap-3">
-                      <Skeleton className="h-4 w-1/3" />
-                      <Skeleton className="h-5 w-2/3" />
-                      <Skeleton className="h-10 w-full" />
-                    </Card>
-                  )}
-                </>
-              )}
-
-              {tab === "extras" && (
-                <>
-                  <SectionHeading>Look</SectionHeading>
-                  <ThemePicker value={props.theme} onChange={props.onTheme} disabled={props.blocked} />
-                  <SectionHeading>Testimonials</SectionHeading>
-                  {testimonials.length === 0 && <p className="text-ui text-text-2">None yet. Only add words a real customer said about you.</p>}
-                  {testimonials.map((testimonial, index) => (
-                    <Card key={index} className="flex flex-col gap-2">
-                      <p className="text-ui text-text-2">&ldquo;{testimonial.text}&rdquo;</p>
-                      <p className="text-ui font-medium">{testimonial.name}</p>
-                      <Button variant="tertiary" size="sm" onClick={() => edit.onTestimonial(index)} disabled={edit.disabled} className="self-start">
-                        Edit
-                      </Button>
-                    </Card>
-                  ))}
-                  {testimonials.length < 3 && (
-                    <Button variant="tertiary" icon={<Plus aria-hidden />} onClick={() => edit.onTestimonial(null)} disabled={edit.disabled} className="self-start border-dashed">
-                      Add a testimonial
-                    </Button>
-                  )}
-                </>
-              )}
-
-              {tab === "sell" && props.readyToSell}
-            </div>
-
-            <footer className="flex shrink-0 justify-end gap-2 border-t border-stroke-primary px-6 py-3">
-              <Button variant="tertiary" onClick={props.onRedoAll} disabled={props.blocked}>
-                Redo all
-              </Button>
-              <Button onClick={props.onPublish} disabled={props.blocked && !props.publishing} loading={props.publishing}>
-                Publish
-              </Button>
-            </footer>
-          </>
+          </div>
         )}
+        {/* Stays mounted under an open form, so focus can go back to the button that opened it. */}
+        <div hidden={formOpen} onClickCapture={() => (opener.current = document.activeElement)} className="flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 px-2">
+            <SectionTabs id="editor" label="Editor sections" tabs={tabs} value={tab} onChange={setTab} />
+          </div>
+          <div role="tabpanel" id={`editor-panel-${tab}`} aria-labelledby={`editor-tab-${tab}`} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-6">
+            {!form && status}
+
+            {tab === "profile" && (
+              <>
+                <SectionHeading>Name and bio</SectionHeading>
+                <Card className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1">
+                    <Label>Name</Label>
+                    <p className="text-ui">{store.name.trim() || <span className="text-text-3">Not added yet. You need one to publish.</span>}</p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label>Bio</Label>
+                    {store.bio ? <p className="text-ui text-text-2">{store.bio}</p> : <Skeleton className="h-10 w-full" />}
+                  </div>
+                  {store.handle && (
+                    <div className="flex flex-col gap-1">
+                      <Label>Instagram</Label>
+                      <p className="text-ui text-text-2">@{store.handle}</p>
+                    </div>
+                  )}
+                  <BlockActions block="bio" edit={edit} align="start" />
+                </Card>
+              </>
+            )}
+
+            {tab === "products" && (
+              <>
+                <SectionHeading>Products</SectionHeading>
+                {store.products.map((product, index) => (
+                  <Card key={product.id ?? index} className={`flex flex-col gap-3 ${edit.busy === index ? "opacity-60" : ""}`}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Label>{FORMATS[product.format].label}</Label>
+                      {FORMATS[product.format].lowConfidence && <Badge tone="warning">Based on few examples</Badge>}
+                    </div>
+                    <p className="text-body font-semibold">{product.title}</p>
+                    <p className="flex items-baseline gap-2 text-ui">
+                      <span className="font-semibold">{rupees(product.launchPrice ?? product.price)}</span>
+                      {product.launchPrice !== undefined && <s className="text-text-3">{rupees(product.price)}</s>}
+                    </p>
+                    <p className="line-clamp-2 text-ui text-text-2">{product.description}</p>
+                    {!pending && <EditorNotes product={product} taps={edit.taps && product.id ? (edit.taps[product.id] ?? 0) : undefined} />}
+                    {!pending && <BlockActions block={index} edit={edit} align="start" />}
+                  </Card>
+                ))}
+                {pending && (
+                  <Card className="flex flex-col gap-3">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-10 w-full" />
+                  </Card>
+                )}
+              </>
+            )}
+
+            {tab === "extras" && (
+              <>
+                <SectionHeading>Look</SectionHeading>
+                <ThemePicker value={props.theme} onChange={props.onTheme} disabled={props.blocked} />
+                <SectionHeading>Testimonials</SectionHeading>
+                {testimonials.length === 0 && <p className="text-ui text-text-2">None yet. Only add words a real customer said about you.</p>}
+                {testimonials.map((testimonial, index) => (
+                  <Card key={index} className="flex flex-col gap-2">
+                    <p className="text-ui text-text-2">&ldquo;{testimonial.text}&rdquo;</p>
+                    <p className="text-ui font-medium">{testimonial.name}</p>
+                    <Button variant="tertiary" size="sm" onClick={() => edit.onTestimonial(index)} disabled={edit.disabled} className="self-start">
+                      Edit
+                    </Button>
+                  </Card>
+                ))}
+                {testimonials.length < 3 && (
+                  <Button variant="tertiary" icon={<Plus aria-hidden />} onClick={() => edit.onTestimonial(null)} disabled={edit.disabled} className="self-start border-dashed">
+                    Add a testimonial
+                  </Button>
+                )}
+              </>
+            )}
+
+            {tab === "sell" && props.readyToSell}
+          </div>
+
+          <footer className="flex shrink-0 justify-end gap-2 border-t border-stroke-primary px-6 py-3">
+            <Button variant="tertiary" onClick={props.onRedoAll} disabled={props.blocked}>
+              Redo all
+            </Button>
+            <Button onClick={props.onPublish} disabled={props.blocked && !props.publishing} loading={props.publishing}>
+              Publish
+            </Button>
+          </footer>
+        </div>
       </aside>
 
       <div className="min-h-0 overflow-y-auto">

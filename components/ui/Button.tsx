@@ -5,7 +5,7 @@ export type ButtonVariant = "primary" | "secondary" | "tertiary" | "link" | "tex
 export type ButtonSize = "xs" | "sm" | "md" | "lg" | "checkout";
 
 const BASE =
-  "relative inline-flex shrink-0 items-center justify-center whitespace-nowrap border transition-[background-color,box-shadow,color,opacity,translate] duration-(--duration-base) ui-active:translate-y-px disabled:cursor-not-allowed [&_svg]:shrink-0";
+  "relative inline-flex shrink-0 items-center justify-center whitespace-nowrap border transition-[background-color,box-shadow,color,opacity,translate] duration-(--duration-base) motion-safe:ui-active:translate-y-px disabled:cursor-not-allowed [&_svg]:shrink-0";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "border-transparent bg-ink text-text-inverted ui-hover:shadow-primary-hover ui-active:shadow-none disabled:opacity-50",
@@ -17,10 +17,10 @@ const VARIANTS: Record<ButtonVariant, string> = {
   grey: "border-transparent bg-surface-3 text-text-1 ui-hover:bg-surface-4 ui-active:bg-surface-5 disabled:opacity-50",
   // Destructive actions: red words, a red wash on hover.
   danger: "border-transparent text-text-critical ui-hover:bg-surface-critical-1 ui-active:bg-surface-critical-2 disabled:opacity-50",
-  // The store's own theme colour (set by themeVars on the store); white text passes AA on every theme.
+  // The store's own theme colour (from data-store-theme on the store); white text passes AA on every theme.
   store: "border-transparent bg-(--store-button) text-text-inverted ui-hover:shadow-primary-hover ui-active:shadow-none disabled:opacity-50",
   // AI entry points: the violet-to-blue tint, a blue sparkle and a springy icon on hover.
-  ai: "border-stroke-primary bg-(image:--ai-tint) text-text-1 ui-hover:bg-surface-accent ui-active:bg-surface-ai disabled:opacity-50 [&_svg]:text-ai-blue [&_svg]:transition-transform [&_svg]:duration-(--duration-spring) [&_svg]:ease-spring ui-hover:[&_svg]:-translate-y-px ui-hover:[&_svg]:rotate-12",
+  ai: "border-stroke-primary bg-(image:--ai-tint) text-text-1 ui-hover:bg-surface-accent ui-active:bg-surface-ai disabled:opacity-50 [&_svg]:text-ai-blue [&_svg]:transition-transform [&_svg]:duration-(--duration-spring) [&_svg]:ease-spring motion-safe:ui-hover:[&_svg]:-translate-y-px motion-safe:ui-hover:[&_svg]:rotate-12",
 };
 
 // Heights: xs 28px, sm 36px, md 40px, lg 44px (1px border included); checkout is the public page's 48px call to action.

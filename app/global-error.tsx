@@ -22,7 +22,7 @@ export default function GlobalError({ retry }: { error: unknown; retry: () => vo
               title="Something went wrong on our side"
               action={
                 <Button size="lg" className="w-full" onClick={() => retry()}>
-                  Try again
+                  Try Again
                 </Button>
               }
             >
