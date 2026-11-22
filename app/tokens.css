@@ -163,6 +163,11 @@
   --duration-spring: 380ms; /* AI icon spring */
 }
 
+/* ::backdrop doesn't inherit custom properties in every browser (older iOS Safari), so it gets its own copy. */
+::backdrop {
+  --modal-backdrop: rgb(0 0 0 / 0.9);
+}
+
 @theme {
   --font-sans: var(--font-hind, system-ui), Poppins, system-ui, -apple-system, "Segoe UI", sans-serif;
 

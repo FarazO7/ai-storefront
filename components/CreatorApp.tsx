@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
-import { HeaderSheet, ProductSheet, PublishedSheet, TestimonialSheet, type Field } from "@/components/EditSheets";
+import { ArrowLeft } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import DesktopEditor from "@/components/DesktopEditor";
+import { HeaderForm, ProductForm, PublishedSheet, TestimonialForm, type Field } from "@/components/EditSheets";
 import InputScreen, { type Answer, type Input, type Notice } from "@/components/InputScreen";
 import ReadyToSell from "@/components/ReadyToSell";
+import StoreView, { type Block, type EditControls } from "@/components/StoreView";
+import ThemePicker from "@/components/ThemePicker";
+import Button from "@/components/ui/Button";
+import Logo from "@/components/ui/Logo";
+import Modal from "@/components/ui/Modal";
 import { Callout } from "@/components/ui/Status";
-import StoreView, { type Block } from "@/components/StoreView";
 import type { GenerateEvent } from "@/lib/ai";
-import { AI_ERROR, THEME_IDS, THEMES, themeVars, type ThemeId } from "@/lib/constants";
+import { AI_ERROR, themeVars } from "@/lib/constants";
 import type { GenerateResponse, Product, Store, StoredInput } from "@/lib/schema";
 import type { ProductDraft } from "@/lib/validate";
 
@@ -15,6 +21,7 @@ type Published = { slug: string; token: string };
 type Generating = { bio: string | null; products: ProductDraft[]; retrying: boolean; slow: boolean };
 type Sheet = { kind: "header" } | { kind: "product"; index: number } | { kind: "testimonial"; index: number | null } | { kind: "published" } | null;
 type Draft = { input: Input; answers: Answer[] | null; store: Store | null; edited: boolean; published: Published | null };
+type Confirm = { title: string; body: string; confirmLabel: string; onConfirm: () => void };
 
 const DRAFT_KEY = "ai-storefront:draft:v1";
 const EMPTY_INPUT: Input = { description: "", followers: null, handle: "", productInMind: "", instagramText: "" };
@@ -68,6 +75,14 @@ function readDraft(): Draft | null {
 const noop = () => {};
 const subscribeNoop = () => noop;
 
+// From 992px the editor splits into a form panel and a live preview.
+const DESKTOP = "(min-width: 992px)";
+const subscribeDesktop = (onChange: () => void) => {
+  const query = window.matchMedia(DESKTOP);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+
 // The server (and the first paint) shows the empty form. On the phone, the app then mounts with the saved
 // draft already in its state, so a refresh loses nothing. Edit links render straight away with the saved store.
 export default function CreatorApp({ initial }: { initial?: Initial }) {
@@ -98,6 +113,10 @@ function Creator({ initial }: { initial?: Initial }) {
   const [busyBlock, setBusyBlock] = useState<Block | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [sheet, setSheet] = useState<Sheet>(null);
+  // The open form's unsaved draft, so the desktop preview follows each keystroke.
+  const [previewDraft, setPreviewDraft] = useState<Store | null>(null);
+  const [confirm, setConfirm] = useState<Confirm | null>(null);
+  const desktop = useSyncExternalStore(subscribeDesktop, () => window.matchMedia(DESKTOP).matches, () => false);
   const [view, setView] = useState<"input" | "store">(() => (editLink || (draft?.store && location.hash === "#store") ? "store" : "input"));
   const running = useRef(false);
   const pushedStoreView = useRef(false);
@@ -124,6 +143,11 @@ function Creator({ initial }: { initial?: Initial }) {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [editLink]);
+
+  function closeSheet() {
+    setSheet(null);
+    setPreviewDraft(null);
+  }
 
   function showStore() {
     if (!editLink && location.hash !== "#store") {
@@ -155,14 +179,17 @@ function Creator({ initial }: { initial?: Initial }) {
 
   // fromEditor: "Redo all" keeps the current store on screen if anything goes wrong. From the form,
   // problems (questions, rejection, failure) show on the form, next to what the creator typed.
-  async function generate(withAnswers: Answer[] | null, fromEditor = false) {
+  async function generate(withAnswers: Answer[] | null, fromEditor = false, confirmed = false) {
     if (running.current) return; // no double submits
-    if (!fromEditor && edited && !window.confirm("This makes a new store and replaces your edits. Continue?")) return;
+    if (!fromEditor && edited && !confirmed) {
+      setConfirm({ title: "Replace your edits?", body: "This makes a new store and replaces your edits.", confirmLabel: "Make a new store", onConfirm: () => generate(withAnswers, false, true) });
+      return;
+    }
     running.current = true;
     lastAnswers.current = withAnswers;
     setNotice(null);
     setMessage(null);
-    setSheet(null);
+    closeSheet();
     setGenerating({ bio: null, products: [], retrying: false, slow: false });
     showStore();
     const slowTimer = setTimeout(() => setGenerating((g) => g && { ...g, slow: true }), 10_000);
@@ -263,23 +290,51 @@ function Creator({ initial }: { initial?: Initial }) {
   }
 
   function redoAll() {
-    if (edited && !window.confirm("Redo all replaces your edits with a new store. Continue?")) return;
-    generate(answers, true);
+    if (!edited) return generate(answers, true);
+    setConfirm({ title: "Replace your edits?", body: "Redo all replaces your edits with a new store.", confirmLabel: "Redo all", onConfirm: () => generate(answers, true) });
   }
+
+  const confirmDialog = confirm && (
+    <Modal
+      title={confirm.title}
+      onClose={() => setConfirm(null)}
+      footer={
+        <>
+          <Button variant="text" size="sm" onClick={() => setConfirm(null)}>
+            Keep my edits
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              setConfirm(null);
+              confirm.onConfirm();
+            }}
+          >
+            {confirm.confirmLabel}
+          </Button>
+        </>
+      }
+    >
+      {confirm.body}
+    </Modal>
+  );
 
   if (view === "input" || (!store && !generating)) {
     return (
-      <InputScreen
-        input={input}
-        onChange={setInput}
-        notice={notice}
-        busy={generating !== null}
-        hasStore={store !== null}
-        onGenerate={() => generate(null)}
-        onRetry={() => generate(lastAnswers.current)}
-        onAnswers={(next) => generate(next)}
-        onBackToStore={showStore}
-      />
+      <>
+        <InputScreen
+          input={input}
+          onChange={setInput}
+          notice={notice}
+          busy={generating !== null}
+          hasStore={store !== null}
+          onGenerate={() => generate(null)}
+          onRetry={() => generate(lastAnswers.current)}
+          onAnswers={(next) => generate(next)}
+          onBackToStore={showStore}
+        />
+        {confirmDialog}
+      </>
     );
   }
 
@@ -287,131 +342,168 @@ function Creator({ initial }: { initial?: Initial }) {
     ? { name: store?.name ?? "", handle: handle || null, bio: generating.bio ?? "", products: generating.products, theme: store?.theme }
     : store!;
   const blocked = generating !== null || busyBlock !== null || publishing;
-
-  return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6">
-      {!editLink && (
-        <button type="button" onClick={showInput} disabled={generating !== null} className="min-h-11 self-start font-medium text-sky-700 underline disabled:opacity-40">
-          ← Change my details
-        </button>
-      )}
+  const editControls: EditControls = {
+    onEdit: (block) => setSheet(block === "bio" ? { kind: "header" } : { kind: "product", index: block }),
+    onRedo: redo,
+    onTestimonial: (index) => setSheet({ kind: "testimonial", index }),
+    busy: busyBlock,
+    disabled: blocked,
+    taps: initial?.taps,
+  };
+  const status = (
+    <>
       {generating && (
         <Callout tone="ai" role="status">
           {generating.retrying ? "Taking longer than usual. Trying again…" : generating.slow ? "Still working…" : "Writing your store…"}
         </Callout>
       )}
       {message && (
-        <p role="alert" className="rounded-xl bg-amber-50 p-3 text-amber-900">
+        <Callout tone="warning" role="alert">
           {message}
-        </p>
+        </Callout>
       )}
+    </>
+  );
+  const readyToSell = editLink && published && !generating ? <ReadyToSell slug={published.slug} token={published.token} /> : null;
 
-      {!generating && store && (
-        <ThemePicker value={store.theme ?? "classic"} disabled={blocked} onChange={(theme) => setStore({ ...store, theme })} />
-      )}
-
-      {/* The preview gets the same background the public page will have. */}
-      <div style={themeVars(shown.theme) as CSSProperties} className="-mx-4 bg-(--store-bg) px-4 py-6 transition-colors">
-        <StoreView
-          store={shown}
-          pending={generating !== null}
-          edit={
-            generating
-              ? undefined
-              : {
-                  onEdit: (block) => setSheet(block === "bio" ? { kind: "header" } : { kind: "product", index: block }),
-                  onRedo: redo,
-                  onTestimonial: (index) => setSheet({ kind: "testimonial", index }),
-                  busy: busyBlock,
-                  disabled: blocked,
-                  taps: initial?.taps,
-                }
-          }
-        />
-      </div>
-
-      {editLink && published && !generating && <ReadyToSell slug={published.slug} token={published.token} />}
-
-      <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-zinc-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <button type="button" onClick={redoAll} disabled={blocked} className="h-12 flex-1 rounded-xl border border-zinc-300 font-medium disabled:opacity-40">
-          Redo all
-        </button>
-        <button type="button" onClick={publish} disabled={blocked} className="h-12 flex-[2] rounded-xl bg-zinc-900 font-medium text-white disabled:opacity-40">
-          {publishing ? "Publishing…" : "Publish"}
-        </button>
-      </div>
-
-      {sheet?.kind === "header" && store && (
-        <HeaderSheet
+  // One open form at a time: a bottom sheet on phones, inline in the panel on desktop (with the live preview).
+  const onDraft = desktop ? setPreviewDraft : undefined;
+  let form: { title: string; node: ReactNode } | null = null;
+  if (store && sheet?.kind === "header") {
+    form = {
+      title: "Your name and bio",
+      node: (
+        <HeaderForm
           store={store}
-          onClose={() => setSheet(null)}
+          onCancel={closeSheet}
+          onDraft={onDraft}
           onRewrite={(field, draft) => rewrite("bio", field, draft)}
           onSave={(next) => {
             if (next.bio !== store.bio) setEdited(true);
             if (next.name.trim()) setMessage((m) => (m === NAME_NEEDED ? null : m));
             setStore({ ...store, ...next });
-            setSheet(null);
+            closeSheet();
           }}
         />
-      )}
-      {sheet?.kind === "product" && store && (
-        <ProductSheet
+      ),
+    };
+  } else if (store && sheet?.kind === "product") {
+    const index = sheet.index;
+    form = {
+      title: `Product ${index + 1}`,
+      node: (
+        <ProductForm
+          key={index}
           store={store}
-          index={sheet.index}
-          onClose={() => setSheet(null)}
-          onRewrite={(field, draft) => rewrite(sheet.index, field, draft)}
+          index={index}
+          onCancel={closeSheet}
+          onDraft={onDraft}
+          onRewrite={(field, draft) => rewrite(index, field, draft)}
           onSave={(next) => {
-            if (JSON.stringify(next) !== JSON.stringify(store.products[sheet.index])) setEdited(true);
-            setStore({ ...store, products: store.products.map((p, i) => (i === sheet.index ? next : p)) });
-            setSheet(null);
+            if (JSON.stringify(next) !== JSON.stringify(store.products[index])) setEdited(true);
+            setStore({ ...store, products: store.products.map((p, i) => (i === index ? next : p)) });
+            closeSheet();
           }}
         />
-      )}
-      {sheet?.kind === "testimonial" && store && (
-        <TestimonialSheet
-          initial={sheet.index === null ? null : (store.testimonials?.[sheet.index] ?? null)}
-          onClose={() => setSheet(null)}
+      ),
+    };
+  } else if (store && sheet?.kind === "testimonial") {
+    const index = sheet.index;
+    form = {
+      title: index === null ? "Add a testimonial" : "Edit testimonial",
+      node: (
+        <TestimonialForm
+          key={String(index)}
+          store={store}
+          index={index}
+          onCancel={closeSheet}
+          onDraft={onDraft}
           onSave={(next) => {
             const list = store.testimonials ?? [];
-            setStore({ ...store, testimonials: sheet.index === null ? [...list, next] : list.map((t, i) => (i === sheet.index ? next : t)) });
-            setSheet(null);
+            setStore({ ...store, testimonials: index === null ? [...list, next] : list.map((t, i) => (i === index ? next : t)) });
+            closeSheet();
           }}
           onRemove={
-            sheet.index === null
+            index === null
               ? undefined
               : () => {
-                  setStore({ ...store, testimonials: (store.testimonials ?? []).filter((_, i) => i !== sheet.index) });
-                  setSheet(null);
+                  setStore({ ...store, testimonials: (store.testimonials ?? []).filter((_, i) => i !== index) });
+                  closeSheet();
                 }
           }
         />
-      )}
-      {sheet?.kind === "published" && published && <PublishedSheet slug={published.slug} token={published.token} onClose={() => setSheet(null)} />}
-    </section>
-  );
-}
+      ),
+    };
+  }
+  const publishedSheet = sheet?.kind === "published" && published && <PublishedSheet slug={published.slug} token={published.token} onClose={closeSheet} />;
 
-function ThemePicker({ value, onChange, disabled }: { value: ThemeId; onChange: (theme: ThemeId) => void; disabled: boolean }) {
+  if (desktop) {
+    return (
+      <>
+        <DesktopEditor
+          store={shown}
+          preview={previewDraft ?? shown}
+          pending={generating !== null}
+          editLink={editLink}
+          status={status}
+          form={form && { ...form, onCancel: closeSheet }}
+          onBack={showInput}
+          edit={editControls}
+          theme={shown.theme ?? "classic"}
+          onTheme={(theme) => store && setStore({ ...store, theme })}
+          readyToSell={readyToSell}
+          onRedoAll={redoAll}
+          onPublish={publish}
+          publishing={publishing}
+          blocked={blocked}
+          publicUrl={published ? `${window.location.origin}/s/${published.slug}` : null}
+        />
+        {publishedSheet}
+        {confirmDialog}
+      </>
+    );
+  }
+
   return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-medium">Colour theme</legend>
-      <div role="radiogroup" aria-label="Colour theme" className="grid grid-cols-4 gap-2">
-        {THEME_IDS.map((id) => (
-          <button
-            key={id}
-            type="button"
-            role="radio"
-            aria-checked={value === id}
-            disabled={disabled}
-            onClick={() => onChange(id)}
-            style={{ backgroundColor: THEMES[id].bg }}
-            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl border text-xs font-medium disabled:opacity-40 ${value === id ? "border-zinc-900 ring-2 ring-zinc-900" : "border-zinc-300"}`}
-          >
-            <span aria-hidden className="size-5 rounded-full" style={{ backgroundColor: THEMES[id].button }} />
-            {THEMES[id].label}
-          </button>
-        ))}
-      </div>
-    </fieldset>
+    <>
+      <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-6">
+        <div className="flex min-h-11 items-center">
+          {editLink ? (
+            <Logo />
+          ) : (
+            <Button variant="link" size="sm" icon={<ArrowLeft aria-hidden />} onClick={showInput} disabled={generating !== null} className="-ml-3">
+              Change my details
+            </Button>
+          )}
+        </div>
+        {status}
+
+        {!generating && store && <ThemePicker value={store.theme ?? "classic"} disabled={blocked} onChange={(theme) => setStore({ ...store, theme })} />}
+
+        {/* The preview gets the same background the public page will have. */}
+        <div style={themeVars(shown.theme) as CSSProperties} className="-mx-4 bg-(--store-bg) px-4 py-6 transition-colors">
+          <StoreView store={shown} pending={generating !== null} edit={generating ? undefined : editControls} />
+        </div>
+
+        {readyToSell}
+
+        <div className="sticky bottom-0 -mx-4 flex gap-3 border-t border-stroke-primary bg-surface-1 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Button variant="tertiary" size="lg" onClick={redoAll} disabled={blocked} className="flex-1">
+            Redo all
+          </Button>
+          <Button size="lg" onClick={publish} disabled={blocked && !publishing} loading={publishing} className="flex-[2]">
+            Publish
+          </Button>
+        </div>
+      </section>
+
+      {form && (
+        <Modal title={form.title} onClose={closeSheet}>
+          {form.node}
+        </Modal>
+      )}
+      {publishedSheet}
+      {confirmDialog}
+    </>
   );
 }

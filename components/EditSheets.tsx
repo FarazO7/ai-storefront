@@ -1,17 +1,21 @@
 "use client";
 
+import { Check, Copy, ExternalLink, MessageCircle, Sparkles, Trash2 } from "lucide-react";
 import { useId, useState } from "react";
-import BottomSheet from "@/components/BottomSheet";
+import Button, { buttonClass } from "@/components/ui/Button";
+import { DiscountChip, Field as FieldBlock, Input, Textarea } from "@/components/ui/Field";
+import Modal from "@/components/ui/Modal";
+import { Callout } from "@/components/ui/Status";
 import { DISCOUNT_TIP, LIMITS } from "@/lib/constants";
 import type { Faq, Product, Store, Testimonial } from "@/lib/schema";
 
 export type Field = "bio" | "title" | "description" | "buttonLabel";
 export type Rewrite = (field: Field, draft: Store) => Promise<string | { error: string }>;
 
-const inputClass = "rounded-xl border border-zinc-300 px-3 text-base";
-const primary = "h-12 rounded-xl bg-zinc-900 font-medium text-white disabled:opacity-40";
-const secondary = "h-12 rounded-xl border border-zinc-300 font-medium";
+/** Shared by every form: Cancel closes without saving, Save commits; `onDraft` lets the desktop preview follow each keystroke. */
+type FormProps<T> = { onCancel: () => void; onSave: (next: T) => void; onDraft?: (store: Store) => void };
 
+/** A text field with an optional "Rewrite with AI". The AI's version appears underneath: use it, keep yours, or try again. */
 function TextField({ label, value, onChange, max, multiline = false, onRewrite }: {
   label: string;
   value: string;
@@ -22,6 +26,7 @@ function TextField({ label, value, onChange, max, multiline = false, onRewrite }
 }) {
   const id = useId();
   const [busy, setBusy] = useState(false);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function rewrite() {
@@ -30,215 +35,228 @@ function TextField({ label, value, onChange, max, multiline = false, onRewrite }
     setError(null);
     const result = await onRewrite();
     setBusy(false);
-    if (typeof result === "string") onChange(result);
+    if (typeof result === "string") setSuggestion(result);
     else setError(result.error);
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="flex justify-between text-sm font-medium">
-        {label}
-        <span className="font-normal text-zinc-500">
-          {value.length} / {max}
-        </span>
-      </label>
+    <FieldBlock label={label} htmlFor={id}>
       {multiline ? (
-        <textarea id={id} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={4} className={`${inputClass} py-2`} />
+        <Textarea id={id} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={4} counter />
       ) : (
-        <input id={id} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} className={`${inputClass} h-12`} />
+        <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} counter />
       )}
-      {onRewrite && (
-        <button
-          type="button"
-          onClick={rewrite}
-          disabled={busy}
-          className="h-11 self-start rounded-full border border-zinc-300 px-4 text-sm font-medium disabled:opacity-40"
+      {onRewrite && !suggestion && (
+        <Button variant="ai" size="sm" icon={<Sparkles aria-hidden />} onClick={rewrite} loading={busy} className="self-start">
+          Rewrite with AI
+        </Button>
+      )}
+      {suggestion && (
+        <Callout
+          tone="ai"
+          title="AI suggestion"
+          role="status"
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="xs"
+                onClick={() => {
+                  onChange(suggestion.slice(0, max));
+                  setSuggestion(null);
+                }}
+              >
+                Use this
+              </Button>
+              <Button variant="tertiary" size="xs" onClick={rewrite} loading={busy}>
+                Try again
+              </Button>
+              <Button variant="text" size="xs" onClick={() => setSuggestion(null)}>
+                Keep mine
+              </Button>
+            </div>
+          }
         >
-          {busy ? "Rewriting…" : "Rewrite with AI"}
-        </button>
+          <p className="whitespace-pre-wrap">{suggestion}</p>
+        </Callout>
       )}
       {error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-ui text-text-critical">
           {error}
         </p>
       )}
-    </div>
+    </FieldBlock>
   );
 }
 
-function SaveRow({ onCancel, onSave, disabled }: { onCancel: () => void; onSave: () => void; disabled: boolean }) {
+function FormActions({ onCancel, onSave, disabled }: { onCancel: () => void; onSave: () => void; disabled: boolean }) {
   return (
-    <div className="flex gap-3">
-      <button type="button" onClick={onCancel} className={`flex-1 ${secondary}`}>
+    <div className="flex justify-end gap-2 border-t border-stroke-primary pt-4">
+      <Button variant="text" onClick={onCancel}>
         Cancel
-      </button>
-      <button type="button" onClick={onSave} disabled={disabled} className={`flex-[2] ${primary}`}>
+      </Button>
+      <Button onClick={onSave} disabled={disabled}>
         Save
-      </button>
+      </Button>
     </div>
   );
 }
 
-export function HeaderSheet({ store, onClose, onSave, onRewrite }: {
-  store: Store;
-  onClose: () => void;
-  onSave: (next: { name: string; bio: string }) => void;
-  onRewrite: Rewrite;
-}) {
-  const [name, setName] = useState(store.name);
-  const [bio, setBio] = useState(store.bio);
+export function HeaderForm({ store, onCancel, onSave, onDraft, onRewrite }: { store: Store; onRewrite: Rewrite } & FormProps<{ name: string; bio: string }>) {
+  const [form, setForm] = useState({ name: store.name, bio: store.bio });
+  const update = (patch: Partial<typeof form>) => {
+    const next = { ...form, ...patch };
+    setForm(next);
+    onDraft?.({ ...store, ...next });
+  };
 
   return (
-    <BottomSheet title="Your name and bio" onClose={onClose}>
-      <TextField label="Your name" value={name} onChange={setName} max={LIMITS.name} />
-      <TextField label="Bio" value={bio} onChange={setBio} max={LIMITS.bio} multiline onRewrite={() => onRewrite("bio", { ...store, name, bio })} />
-      <SaveRow onCancel={onClose} onSave={() => onSave({ name: name.trim(), bio: bio.trim() })} disabled={!bio.trim()} />
-    </BottomSheet>
+    <div className="flex flex-col gap-5">
+      <TextField label="Your name" value={form.name} onChange={(name) => update({ name })} max={LIMITS.name} />
+      <TextField label="Bio" value={form.bio} onChange={(bio) => update({ bio })} max={LIMITS.bio} multiline onRewrite={() => onRewrite("bio", { ...store, ...form })} />
+      <FormActions onCancel={onCancel} onSave={() => onSave({ name: form.name.trim(), bio: form.bio.trim() })} disabled={!form.bio.trim()} />
+    </div>
   );
 }
 
-export function ProductSheet({ store, index, onClose, onSave, onRewrite }: {
-  store: Store;
-  index: number;
-  onClose: () => void;
-  onSave: (next: Product) => void;
-  onRewrite: Rewrite;
-}) {
+type ProductFields = { title: string; price: string; launchPrice: string; description: string; buttonLabel: string; faqs: Faq[] };
+
+export function ProductForm({ store, index, onCancel, onSave, onDraft, onRewrite }: { store: Store; index: number; onRewrite: Rewrite } & FormProps<Product>) {
   const priceId = useId();
   const launchId = useId();
   const original = store.products[index];
-  const [title, setTitle] = useState(original.title);
-  const [price, setPrice] = useState(String(original.price));
-  const [launchPrice, setLaunchPrice] = useState(original.launchPrice ? String(original.launchPrice) : "");
-  const [description, setDescription] = useState(original.description);
-  const [buttonLabel, setButtonLabel] = useState(original.buttonLabel);
-  const [faqs, setFaqs] = useState<Faq[]>(original.faqs ?? []);
-  const setFaq = (j: number, patch: Partial<Faq>) => setFaqs(faqs.map((faq, k) => (k === j ? { ...faq, ...patch } : faq)));
+  const [form, setForm] = useState<ProductFields>({
+    title: original.title,
+    price: String(original.price),
+    launchPrice: original.launchPrice ? String(original.launchPrice) : "",
+    description: original.description,
+    buttonLabel: original.buttonLabel,
+    faqs: original.faqs ?? [],
+  });
 
   // Creators may set any whole-rupee price; the research bands only bind AI output.
-  const priceOk = /^\d+$/.test(price) && Number(price) >= 1 && Number(price) <= LIMITS.maxPrice;
-  const launchOk = launchPrice === "" || (/^\d+$/.test(launchPrice) && Number(launchPrice) >= 1 && Number(launchPrice) < Number(price));
-  const faqsOk = faqs.every((faq) => faq.question.trim() !== "" && faq.answer.trim() !== "");
-  const draft = (): Product => ({
-    ...original,
-    title: title.trim(),
-    description: description.trim(),
-    buttonLabel: buttonLabel.trim(),
-    price: priceOk ? Number(price) : original.price,
-    launchPrice: launchPrice && launchOk && priceOk ? Number(launchPrice) : undefined,
-    faqs: faqs.map((faq) => ({ question: faq.question.trim(), answer: faq.answer.trim() })),
-  });
-  const draftStore = (): Store => ({ ...store, products: store.products.map((p, i) => (i === index ? draft() : p)) });
-  const complete = title.trim() !== "" && description.trim() !== "" && buttonLabel.trim() !== "" && priceOk && launchOk && faqsOk;
+  const checks = (f: ProductFields) => {
+    const priceOk = /^\d+$/.test(f.price) && Number(f.price) >= 1 && Number(f.price) <= LIMITS.maxPrice;
+    const launchOk = f.launchPrice === "" || (/^\d+$/.test(f.launchPrice) && Number(f.launchPrice) >= 1 && Number(f.launchPrice) < Number(f.price));
+    return { priceOk, launchOk, faqsOk: f.faqs.every((faq) => faq.question.trim() !== "" && faq.answer.trim() !== "") };
+  };
+  const draft = (f: ProductFields): Product => {
+    const { priceOk, launchOk } = checks(f);
+    return {
+      ...original,
+      title: f.title.trim(),
+      description: f.description.trim(),
+      buttonLabel: f.buttonLabel.trim(),
+      price: priceOk ? Number(f.price) : original.price,
+      launchPrice: f.launchPrice && launchOk && priceOk ? Number(f.launchPrice) : undefined,
+      faqs: f.faqs.map((faq) => ({ question: faq.question.trim(), answer: faq.answer.trim() })),
+    };
+  };
+  const draftStore = (f: ProductFields): Store => ({ ...store, products: store.products.map((p, i) => (i === index ? draft(f) : p)) });
+  const update = (patch: Partial<ProductFields>) => {
+    const next = { ...form, ...patch };
+    setForm(next);
+    onDraft?.(draftStore(next));
+  };
+  const setFaq = (j: number, patch: Partial<Faq>) => update({ faqs: form.faqs.map((faq, k) => (k === j ? { ...faq, ...patch } : faq)) });
+
+  const { priceOk, launchOk, faqsOk } = checks(form);
+  const complete = form.title.trim() !== "" && form.description.trim() !== "" && form.buttonLabel.trim() !== "" && priceOk && launchOk && faqsOk;
+  const percentOff = launchOk && priceOk && form.launchPrice ? Math.round((1 - Number(form.launchPrice) / Number(form.price)) * 100) : null;
+  const rupees = (value: string) => `₹${Number(value).toLocaleString("en-IN")}`;
 
   return (
-    <BottomSheet title={`Product ${index + 1}`} onClose={onClose}>
-      <TextField label="Title" value={title} onChange={setTitle} max={LIMITS.title} onRewrite={() => onRewrite("title", draftStore())} />
-      <div className="flex flex-col gap-1">
-        <label htmlFor={priceId} className="text-sm font-medium">
-          Price in ₹
-        </label>
-        <input
-          id={priceId}
-          inputMode="numeric"
-          value={price}
-          onChange={(e) => setPrice(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          className={`${inputClass} h-12`}
-        />
-        {!priceOk && (
-          <p role="alert" className="text-sm text-red-700">
-            Enter a whole number from ₹1 to ₹1,00,000.
-          </p>
-        )}
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor={launchId} className="text-sm font-medium">
-          Launch price in ₹ (optional)
-        </label>
-        <input
+    <div className="flex flex-col gap-5">
+      <TextField label="Title" value={form.title} onChange={(title) => update({ title })} max={LIMITS.title} onRewrite={() => onRewrite("title", draftStore(form))} />
+      <FieldBlock label="Price" htmlFor={priceId} error={priceOk ? undefined : "Enter a whole number from ₹1 to ₹1,00,000."}>
+        <Input id={priceId} inputMode="numeric" prefix="₹" value={form.price} invalid={!priceOk} onChange={(e) => update({ price: e.target.value.replace(/\D/g, "").slice(0, 6) })} />
+      </FieldBlock>
+      <FieldBlock
+        label="Launch price (optional)"
+        htmlFor={launchId}
+        hint={`${DISCOUNT_TIP} Your regular price shows crossed out next to it.`}
+        error={launchOk ? undefined : "Make the launch price lower than the regular price."}
+      >
+        <Input
           id={launchId}
           inputMode="numeric"
-          value={launchPrice}
-          onChange={(e) => setLaunchPrice(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          prefix="₹"
+          value={form.launchPrice}
+          invalid={!launchOk}
+          onChange={(e) => update({ launchPrice: e.target.value.replace(/\D/g, "").slice(0, 6) })}
           placeholder="Leave empty for no discount"
-          className={`${inputClass} h-12`}
+          suffix={percentOff !== null ? <DiscountChip price={rupees(form.launchPrice)} regular={rupees(form.price)} percent={percentOff} /> : undefined}
         />
-        <p className="text-sm text-zinc-500">{DISCOUNT_TIP} Your regular price shows crossed out next to it.</p>
-        {!launchOk && (
-          <p role="alert" className="text-sm text-red-700">
-            Make the launch price lower than the regular price.
-          </p>
-        )}
-      </div>
+      </FieldBlock>
       <TextField
         label="Description"
-        value={description}
-        onChange={setDescription}
+        value={form.description}
+        onChange={(description) => update({ description })}
         max={LIMITS.productDescription}
         multiline
-        onRewrite={() => onRewrite("description", draftStore())}
+        onRewrite={() => onRewrite("description", draftStore(form))}
       />
-      <TextField label="Button text" value={buttonLabel} onChange={setButtonLabel} max={LIMITS.buttonLabel} onRewrite={() => onRewrite("buttonLabel", draftStore())} />
-      {faqs.map((faq, j) => (
-        <fieldset key={j} className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-3">
-          <legend className="px-1 text-sm font-semibold">Question {j + 1}</legend>
+      <TextField label="Button text" value={form.buttonLabel} onChange={(buttonLabel) => update({ buttonLabel })} max={LIMITS.buttonLabel} onRewrite={() => onRewrite("buttonLabel", draftStore(form))} />
+      {form.faqs.map((faq, j) => (
+        <fieldset key={j} className="flex flex-col gap-4 rounded-card border border-stroke-primary p-4">
+          <legend className="px-1 text-ui font-semibold">Question {j + 1}</legend>
           <TextField label="Question" value={faq.question} onChange={(question) => setFaq(j, { question })} max={LIMITS.faqQuestion} />
           <TextField label="Answer" value={faq.answer} onChange={(answer) => setFaq(j, { answer })} max={LIMITS.faqAnswer} multiline />
-          <button
-            type="button"
-            onClick={() => setFaqs(faqs.filter((_, k) => k !== j))}
-            className="h-11 self-start rounded-full border border-red-300 px-4 text-sm font-medium text-red-700"
-          >
+          <Button variant="danger" size="sm" icon={<Trash2 aria-hidden />} onClick={() => update({ faqs: form.faqs.filter((_, k) => k !== j) })} className="self-start">
             Remove this question
-          </button>
+          </Button>
         </fieldset>
       ))}
       {!faqsOk && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-ui text-text-critical">
           Fill in each question and answer, or remove it.
         </p>
       )}
-      <SaveRow onCancel={onClose} onSave={() => onSave(draft())} disabled={!complete} />
-    </BottomSheet>
+      <FormActions onCancel={onCancel} onSave={() => onSave(draft(form))} disabled={!complete} />
+    </div>
   );
 }
 
 // Testimonials are only ever typed by the creator; AI never writes them.
-export function TestimonialSheet({ initial, onClose, onSave, onRemove }: {
-  initial: Testimonial | null;
-  onClose: () => void;
-  onSave: (next: Testimonial) => void;
-  onRemove?: () => void;
-}) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [text, setText] = useState(initial?.text ?? "");
+export function TestimonialForm({ store, index, onCancel, onSave, onDraft, onRemove }: { store: Store; index: number | null; onRemove?: () => void } & FormProps<Testimonial>) {
+  const initial = index === null ? null : (store.testimonials?.[index] ?? null);
+  const [form, setForm] = useState({ name: initial?.name ?? "", text: initial?.text ?? "" });
+  const update = (patch: Partial<typeof form>) => {
+    const next = { ...form, ...patch };
+    setForm(next);
+    const list = store.testimonials ?? [];
+    onDraft?.({ ...store, testimonials: index === null ? [...list, next] : list.map((t, i) => (i === index ? next : t)) });
+  };
 
   return (
-    <BottomSheet title={initial ? "Edit testimonial" : "Add a testimonial"} onClose={onClose}>
-      <p className="text-sm text-zinc-600">For creators who already sell elsewhere. Only add words a real customer said about you.</p>
-      <TextField label="Their name" value={name} onChange={setName} max={LIMITS.testimonialName} />
-      <TextField label="What they said" value={text} onChange={setText} max={LIMITS.testimonialText} multiline />
+    <div className="flex flex-col gap-5">
+      <p className="text-ui text-text-2">For creators who already sell elsewhere. Only add words a real customer said about you.</p>
+      <TextField label="Their name" value={form.name} onChange={(name) => update({ name })} max={LIMITS.testimonialName} />
+      <TextField label="What they said" value={form.text} onChange={(text) => update({ text })} max={LIMITS.testimonialText} multiline />
       {onRemove && (
-        <button type="button" onClick={onRemove} className="h-12 rounded-xl border border-red-300 font-medium text-red-700">
+        <Button variant="danger" icon={<Trash2 aria-hidden />} onClick={onRemove} className="self-start">
           Remove this testimonial
-        </button>
+        </Button>
       )}
-      <SaveRow onCancel={onClose} onSave={() => onSave({ name: name.trim(), text: text.trim() })} disabled={!name.trim() || !text.trim()} />
-    </BottomSheet>
+      <FormActions onCancel={onCancel} onSave={() => onSave({ name: form.name.trim(), text: form.text.trim() })} disabled={!form.name.trim() || !form.text.trim()} />
+    </div>
   );
 }
 
-function CopyLink({ label, url, note }: { label: string; url: string; note?: string }) {
+function CopyLink({ label, url }: { label: string; url: string }) {
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium">{label}</p>
-      <p className="rounded-xl bg-zinc-100 p-3 text-sm break-all">{url}</p>
-      {note && <p className="text-sm text-zinc-600">{note}</p>}
-      <button type="button" onClick={() => navigator.clipboard.writeText(url).then(() => setCopy("copied"), () => setCopy("failed"))} className={primary}>
+      <p className="text-ui font-medium">{label}</p>
+      <p className="rounded-field border border-stroke-primary bg-surface-2 px-3 py-2.5 text-ui break-all">{url}</p>
+      <Button
+        variant="tertiary"
+        icon={copy === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
+        onClick={() => navigator.clipboard.writeText(url).then(() => setCopy("copied"), () => setCopy("failed"))}
+        className="self-start"
+      >
         {copy === "copied" ? "Copied!" : "Copy"}
-      </button>
-      {copy === "failed" && <p className="text-sm text-zinc-600">Couldn&apos;t copy. Press and hold the link above to copy it.</p>}
+      </Button>
+      {copy === "failed" && <p className="text-ui text-text-2">Couldn&apos;t copy. Press and hold the link above to copy it.</p>}
     </div>
   );
 }
@@ -248,20 +266,20 @@ export function PublishedSheet({ slug, token, onClose }: { slug: string; token: 
   const editUrl = `${window.location.origin}/e/${slug}?t=${token}`;
 
   return (
-    <BottomSheet title="Your store is live 🎉" onClose={onClose}>
-      <CopyLink label="Public link: share it with your followers" url={publicUrl} />
-      <a
-        href={`https://wa.me/?text=${encodeURIComponent(publicUrl)}`}
-        target="_blank"
-        rel="noreferrer"
-        className="flex h-12 items-center justify-center rounded-xl bg-emerald-600 font-medium text-white"
-      >
-        Share on WhatsApp
-      </a>
-      <CopyLink label="Private edit link: keep it to yourself" url={editUrl} note="Anyone with this link can change your store. Save it somewhere safe." />
-      <a href={publicUrl} target="_blank" rel="noreferrer" className={`flex items-center justify-center ${secondary}`}>
-        Open my store
-      </a>
-    </BottomSheet>
+    <Modal title="Your store is live 🎉" onClose={onClose}>
+      <div className="flex flex-col gap-5">
+        <CopyLink label="Public link: share it with your followers" url={publicUrl} />
+        <a href={`https://wa.me/?text=${encodeURIComponent(publicUrl)}`} target="_blank" rel="noreferrer" className={`${buttonClass({ variant: "secondary", size: "lg" })} w-full`}>
+          <MessageCircle aria-hidden />
+          Share on WhatsApp
+        </a>
+        <CopyLink label="Private edit link: keep it to yourself" url={editUrl} />
+        <Callout tone="warning">Anyone with this link can change your store. Save it somewhere safe.</Callout>
+        <a href={publicUrl} target="_blank" rel="noreferrer" className={`${buttonClass({ variant: "tertiary", size: "lg" })} w-full`}>
+          Open my store
+          <ExternalLink aria-hidden />
+        </a>
+      </div>
+    </Modal>
   );
 }

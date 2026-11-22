@@ -32,7 +32,7 @@ export function DeviceFrame({ device, url, children }: { device: Device; url: st
   if (device === "mobile") {
     return (
       <div className="w-[390px] max-w-full shrink-0 overflow-hidden rounded-device border-8 border-shell bg-surface-1 shadow-raised">
-        <div className="h-[720px] max-h-[75dvh] overflow-y-auto">{children}</div>
+        <div className="h-[min(760px,calc(100dvh-9rem))] overflow-y-auto">{children}</div>
       </div>
     );
   }
@@ -44,7 +44,7 @@ export function DeviceFrame({ device, url, children }: { device: Device; url: st
         <span className="size-3 rounded-pill bg-stroke-success" />
         <span className="ml-2 min-w-0 flex-1 truncate rounded-pill bg-surface-1 px-3 py-1 text-micro text-text-2">{url}</span>
       </div>
-      <div className="h-[720px] max-h-[75dvh] overflow-y-auto">{children}</div>
+      <div className="h-[min(760px,calc(100dvh-9rem))] overflow-y-auto">{children}</div>
     </div>
   );
 }

@@ -350,3 +350,38 @@ I gave Claude Code a UI brief describing a design language (tokens, components, 
   - A handle with no description showed its message and kept Generate off.
 - Both 404s, the bad edit link and the error page show their pages, and "Go to the home page" recovers from an error in the editor.
 - There's no sideways scrolling, every control is at least 44px or has a 44px touch area, and inputs are 16px.
+
+## 2026-11-22 — UI refresh, Phase 3 (editor)
+
+### What was built
+- **Phone editor:** the same tap-to-edit store, restyled.
+  - Edit and Redo are outlined buttons with icons, and the theme picker uses swatches on native radios.
+  - The sticky bar holds Redo all and Publish, and every form opens as a bottom sheet.
+- **Desktop editor (992px and wider):** a form panel and a live preview.
+  - The panel has tabs for Profile, Products, Extras, and Ready to sell on the edit link. An open form replaces the list.
+  - The preview renders the real store in a phone or browser frame and follows unsaved edits as you type; Cancel puts it back.
+- **Rewrite with AI:** the AI's version now appears under the field as a suggestion to use, keep yours, or try again, instead of replacing the text.
+- **Confirmations:** "Redo all" and making a new store over edits ask in an in-page dialog instead of the browser's confirm box.
+- **Share sheet:** link rows with Copy, WhatsApp as a secondary button, and the private-link warning as a callout.
+- **Ready to sell:** the AI treatment, with chips for the answers, cards for tips and drafts, and badges.
+- **Price notes:** taps show as a count chip with a tooltip, and "Why this price" is an expandable link.
+- **Unchanged:** the API, data, validation, prices and tap counting. Both layouts share one set of handlers and the same form state.
+
+### Decisions the AI made
+- Both layouts use the same "which form is open" state. On desktop, the open form reports its draft so the preview can follow it, without new state or saving rules.
+- The bottom sheet's backdrop gets its own copy of the colour token, because `::backdrop` doesn't inherit custom properties in every browser (it showed the browser's faint default).
+- The old bottom-sheet component was removed; the design-system modal replaces it.
+
+### Verified locally
+Headless Chrome with real AI calls, at 375px with touch and at 1280px:
+- **Phone:**
+  - Publishing without a name opens the name form with its note, which clears after Save.
+  - The bio rewrite showed a suggestion that "Use this" put in the field.
+  - A launch price above the regular price was refused with Save off, and a lower one showed "₹999 ₹1,299 (23% off)".
+  - Redo, theme, testimonial and Publish worked, and "Keep my edits" in the Redo-all dialog kept them.
+- **Desktop:**
+  - The edit link opened the split view with four tabs.
+  - Typing in the bio changed the preview before Save, and Cancel restored it.
+  - The browser frame, Extras and "Ready to sell" worked.
+  - While generating, the status, preview skeletons and disabled footer showed.
+- No console errors and no sideways scrolling.

@@ -1,4 +1,8 @@
+import { ChevronDown, MousePointerClick, Pencil, Plus, RefreshCw } from "lucide-react";
 import type { CSSProperties } from "react";
+import Button from "@/components/ui/Button";
+import InfoTip from "@/components/ui/InfoTip";
+import { Badge, MetricChip } from "@/components/ui/Status";
 import { Skeleton } from "@/components/ui/Surfaces";
 import InterestButton from "@/components/InterestButton";
 import { themeVars, type ThemeId } from "@/lib/constants";
@@ -47,7 +51,6 @@ const COVERS: Record<Format, string> = {
 };
 
 const rupees = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
-const secondary = "h-11 rounded-full border border-zinc-300 bg-white px-4 text-sm font-medium disabled:opacity-40";
 
 function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -63,21 +66,22 @@ const OpenMark = () => (
   </span>
 );
 
-function BlockActions({ block, edit }: { block: Block; edit: EditControls }) {
+/** Edit and Redo for one block. The block being redone shows a spinner; everything else waits. */
+export function BlockActions({ block, edit, align = "end" }: { block: Block; edit: EditControls; align?: "start" | "end" }) {
   return (
-    <div className="flex justify-end gap-2">
-      <button type="button" onClick={() => edit.onEdit(block)} disabled={edit.disabled} className={secondary}>
+    <div className={`flex gap-2 ${align === "end" ? "justify-end" : ""}`}>
+      <Button variant="tertiary" size="sm" icon={<Pencil aria-hidden />} onClick={() => edit.onEdit(block)} disabled={edit.disabled}>
         Edit
-      </button>
-      <button type="button" onClick={() => edit.onRedo(block)} disabled={edit.disabled} className={secondary}>
-        {edit.busy === block ? "Redoing…" : "Redo"}
-      </button>
+      </Button>
+      <Button variant="tertiary" size="sm" icon={<RefreshCw aria-hidden />} onClick={() => edit.onRedo(block)} disabled={edit.disabled && edit.busy !== block} loading={edit.busy === block}>
+        Redo
+      </Button>
     </div>
   );
 }
 
-// Editor only, never on the public page: why this price, the break-even line and interest taps.
-function EditorNotes({ product, taps }: { product: ViewProduct; taps?: number }) {
+// Editor only, never on the public page: interest taps, the break-even line and why this price.
+export function EditorNotes({ product, taps }: { product: ViewProduct; taps?: number }) {
   const band = FORMATS[product.format];
   const price = product.launchPrice ?? product.price;
   const sales = Math.ceil(CREATOR_PLAN_MONTHLY_RUPEES / (price * SHARE_AFTER_FEE));
@@ -86,14 +90,22 @@ function EditorNotes({ product, taps }: { product: ViewProduct; taps?: number })
   );
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-zinc-50 p-3 text-sm text-zinc-700">
+    <div className="flex flex-col gap-2 rounded-card bg-surface-2 p-3 text-ui text-text-2">
+      {taps !== undefined && (
+        <p className="flex items-center gap-1">
+          <MetricChip icon={<MousePointerClick aria-hidden />}>
+            {taps} {taps === 1 ? "tap" : "taps"}
+          </MetricChip>
+          <InfoTip label="About interest taps">People who tapped &ldquo;{product.buttonLabel}&rdquo; on your public page.</InfoTip>
+        </p>
+      )}
       <p>
         About {sales} {sales === 1 ? "sale" : "sales"} a month at this price would cover SuperProfile&apos;s {rupees(CREATOR_PLAN_MONTHLY_RUPEES)} Creator plan, after its 5% fee.
       </p>
-      <details className="group">
-        <summary className={summaryClass}>
-          <span>Why this price</span>
-          <OpenMark />
+      <details className="group/why">
+        <summary className="flex min-h-11 w-fit cursor-pointer list-none items-center gap-1 rounded-card font-medium text-text-accent [&::-webkit-details-marker]:hidden">
+          Why this price
+          <ChevronDown aria-hidden className="size-4 transition-transform duration-(--duration-base) group-open/why:rotate-180" />
         </summary>
         <div className="flex flex-col gap-2 pb-1">
           {product.rationale && <p>{product.rationale}</p>}
@@ -117,11 +129,6 @@ function EditorNotes({ product, taps }: { product: ViewProduct; taps?: number })
           )}
         </div>
       </details>
-      {taps !== undefined && (
-        <p className="font-medium text-zinc-900">
-          {taps} {taps === 1 ? "person" : "people"} tapped &ldquo;{product.buttonLabel}&rdquo;
-        </p>
-      )}
     </div>
   );
 }
@@ -145,7 +152,7 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
           {name ? (
             <h1 className="text-2xl font-semibold">{name}</h1>
           ) : edit ? (
-            <button type="button" onClick={() => edit.onEdit("bio")} className="min-h-11 text-2xl font-semibold text-zinc-400 underline decoration-dashed">
+            <button type="button" onClick={() => edit.onEdit("bio")} className="min-h-11 rounded-card text-2xl font-semibold text-text-4 underline decoration-dashed">
               Add your name
             </button>
           ) : (
@@ -192,7 +199,11 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
                 </>
               )}
             </p>
-            {edit && FORMATS[product.format].lowConfidence && <p className="-mt-2 text-xs font-medium text-amber-700">Based on few examples</p>}
+            {edit && FORMATS[product.format].lowConfidence && (
+              <span className="-mt-1">
+                <Badge tone="warning">Based on few examples</Badge>
+              </span>
+            )}
             <p className="text-zinc-700">{product.description}</p>
             <InterestButton label={product.buttonLabel} handle={store.handle} tap={slug && product.id ? { slug, productId: product.id } : undefined} />
             {product.faqs && product.faqs.length > 0 && (
@@ -231,21 +242,16 @@ export default function StoreView({ store, edit, pending = false, slug }: { stor
               <blockquote className="text-zinc-700">&ldquo;{testimonial.text}&rdquo;</blockquote>
               <figcaption className="text-sm font-medium">{testimonial.name}</figcaption>
               {edit && (
-                <button type="button" onClick={() => edit.onTestimonial(index)} disabled={edit.disabled} className={`self-end ${secondary}`}>
+                <Button variant="tertiary" size="sm" icon={<Pencil aria-hidden />} onClick={() => edit.onTestimonial(index)} disabled={edit.disabled} className="self-end">
                   Edit
-                </button>
+                </Button>
               )}
             </figure>
           ))}
           {edit && testimonials.length < 3 && (
-            <button
-              type="button"
-              onClick={() => edit.onTestimonial(null)}
-              disabled={edit.disabled}
-              className="h-12 rounded-xl border border-dashed border-zinc-400 font-medium text-zinc-700 disabled:opacity-40"
-            >
-              + Add a testimonial
-            </button>
+            <Button variant="tertiary" size="lg" icon={<Plus aria-hidden />} onClick={() => edit.onTestimonial(null)} disabled={edit.disabled} className="w-full border-dashed">
+              Add a testimonial
+            </Button>
           )}
         </section>
       )}

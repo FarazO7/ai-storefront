@@ -1,11 +1,14 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { Check, Copy, Sparkles } from "lucide-react";
+import { useId, useState } from "react";
+import Button from "@/components/ui/Button";
+import { ChoiceChips } from "@/components/ui/Choice";
+import { Field, Input } from "@/components/ui/Field";
+import { Badge, Callout } from "@/components/ui/Status";
+import { Card } from "@/components/ui/Surfaces";
 import { AI_ERROR, LIMITS } from "@/lib/constants";
 import type { PolicyAnswers, PolicyDrafts, SellChecklist } from "@/lib/schema";
-
-const primary = "h-12 rounded-xl bg-zinc-900 font-medium text-white disabled:opacity-40";
-const chip = (on: boolean) => `min-h-11 rounded-full border px-4 text-sm font-medium ${on ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white"}`;
 
 const TIPS = [
   ["bumpOffer", "Bump offer"],
@@ -17,8 +20,8 @@ const POLICIES = [
   ["refund", "Refund policy"],
   ["privacy", "Privacy policy"],
 ] as const;
-const REFUND_OPTIONS = ["No refunds", "Within 7 days", "Within 14 days", "Within 30 days"];
-const ACCESS_OPTIONS = ["Lifetime access", "1 year", "6 months", "Not applicable"];
+const REFUND_OPTIONS = ["No refunds", "Within 7 days", "Within 14 days", "Within 30 days"].map((value) => ({ value, label: value }));
+const ACCESS_OPTIONS = ["Lifetime access", "1 year", "6 months", "Not applicable"].map((value) => ({ value, label: value }));
 
 async function ask<T>(body: unknown): Promise<T | { error: string }> {
   try {
@@ -29,37 +32,25 @@ async function ask<T>(body: unknown): Promise<T | { error: string }> {
   }
 }
 
-const Badge = ({ children }: { children: ReactNode }) => (
-  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-amber-900">{children}</span>
-);
-
-function Choice({ legend, options, value, onChange }: { legend: string; options: string[]; value: string; onChange: (value: string) => void }) {
+function CopyButton({ text }: { text: string }) {
+  const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium">{legend}</p>
-      <div role="radiogroup" aria-label={legend} className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <button key={option} type="button" role="radio" aria-checked={value === option} onClick={() => onChange(option)} className={chip(value === option)}>
-            {option}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col gap-1">
+      <Button
+        variant="tertiary"
+        size="sm"
+        icon={copy === "copied" ? <Check aria-hidden /> : <Copy aria-hidden />}
+        onClick={() => navigator.clipboard.writeText(text).then(() => setCopy("copied"), () => setCopy("failed"))}
+        className="self-start"
+      >
+        {copy === "copied" ? "Copied!" : "Copy"}
+      </Button>
+      {copy === "failed" && <p className="text-ui text-text-2">Couldn&apos;t copy: press and hold the text.</p>}
     </div>
   );
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
-  return (
-    <button
-      type="button"
-      onClick={() => navigator.clipboard.writeText(text).then(() => setCopy("copied"), () => setCopy("failed"))}
-      className="h-11 self-start rounded-full border border-zinc-300 px-4 text-sm font-medium"
-    >
-      {copy === "copied" ? "Copied!" : copy === "failed" ? "Couldn't copy: press and hold the text" : "Copy"}
-    </button>
-  );
-}
+const Heading = ({ children }: { children: string }) => <h3 className="text-body font-semibold text-text-1">{children}</h3>;
 
 // Edit link only: never shown to visitors and never saved. Each part is written on demand by its own AI call.
 export default function ReadyToSell({ slug, token }: { slug: string; token: string }) {
@@ -93,98 +84,97 @@ export default function ReadyToSell({ slug, token }: { slug: string; token: stri
   const ready = answers.refunds !== "" && answers.access !== "" && answers.contact.trim() !== "";
 
   return (
-    <section aria-labelledby="ready-to-sell" className="flex flex-col gap-6 rounded-2xl border border-zinc-200 p-4">
-      <header>
-        <h2 id="ready-to-sell" className="text-lg font-semibold">
+    <section aria-labelledby="ready-to-sell" className="flex flex-col gap-6 rounded-float border border-stroke-primary bg-surface-1 p-4">
+      <header className="-m-4 mb-0 flex flex-col gap-1 rounded-t-float bg-(image:--ai-tint) p-4">
+        <h2 id="ready-to-sell" className="flex items-center gap-2 text-title font-semibold text-text-1">
+          <Sparkles aria-hidden className="size-5 text-ai-blue" />
           Ready to sell
         </h2>
-        <p className="text-sm text-zinc-600">Only you see this. It uses your published store and isn&apos;t saved, so copy what you want to keep.</p>
+        <p className="text-ui text-text-2">Only you see this. It uses your published store and isn&apos;t saved, so copy what you want to keep.</p>
       </header>
 
       <div className="flex flex-col gap-3">
-        <h3 className="font-semibold">Boost sales</h3>
+        <Heading>Boost sales</Heading>
         {!sell && (
-          <button type="button" onClick={makeChecklist} disabled={sellBusy} className={primary}>
+          <Button variant="ai" size="lg" icon={<Sparkles aria-hidden />} onClick={makeChecklist} loading={sellBusy} className="w-full">
             {sellBusy ? "Writing your checklist…" : "Make my checklist"}
-          </button>
+          </Button>
         )}
         {sellError && (
-          <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          <Callout tone="critical" role="alert">
             {sellError}
-          </p>
+          </Callout>
         )}
         {sell &&
           TIPS.map(([key, label]) => (
-            <div key={key} className="flex flex-col gap-1 rounded-xl bg-zinc-50 p-3 text-sm text-zinc-700">
-              <p className="font-semibold text-zinc-900">{label}</p>
+            <Card key={key} className="flex flex-col gap-1 text-ui text-text-2">
+              <p className="font-semibold text-text-1">{label}</p>
               <p>{sell[key].what}</p>
               <p>
-                <span className="font-medium text-zinc-900">When it helps: </span>
+                <span className="font-medium text-text-1">When it helps: </span>
                 {sell[key].when}
               </p>
               <p>
-                <span className="font-medium text-zinc-900">For your store: </span>
+                <span className="font-medium text-text-1">For your store: </span>
                 {sell[key].setup}
               </p>
-            </div>
+            </Card>
           ))}
       </div>
 
       {sell && (
         <div className="flex flex-col gap-3">
-          <h3 className="font-semibold">Tracking</h3>
+          <Heading>Tracking</Heading>
           {(
             [
               ["Meta Pixel", sell.metaPixel],
               ["Google Analytics", sell.googleAnalytics],
             ] as const
           ).map(([label, text]) => (
-            <div key={label} className="flex flex-col gap-1 rounded-xl bg-zinc-50 p-3 text-sm text-zinc-700">
-              <p className="flex flex-wrap items-center gap-2 font-semibold text-zinc-900">
+            <Card key={label} className="flex flex-col gap-2 text-ui text-text-2">
+              <p className="flex flex-wrap items-center gap-2 font-semibold text-text-1">
                 {label} <Badge>Not needed to start</Badge>
               </p>
               <p>{text}</p>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
       <div className="flex flex-col gap-4">
-        <h3 className="font-semibold">Policies</h3>
-        <p className="-mt-2 text-sm text-zinc-600">Answer three short questions, then get drafts of your terms, refund and privacy policies.</p>
-        <Choice legend="Do you give refunds?" options={REFUND_OPTIONS} value={answers.refunds} onChange={(refunds) => setAnswers({ ...answers, refunds })} />
-        <Choice legend="How long can buyers use what they buy?" options={ACCESS_OPTIONS} value={answers.access} onChange={(access) => setAnswers({ ...answers, access })} />
         <div className="flex flex-col gap-1">
-          <label htmlFor={contactId} className="text-sm font-medium">
-            How can buyers contact you?
-          </label>
-          <input
+          <Heading>Policies</Heading>
+          <p className="text-ui text-text-2">Answer three short questions, then get drafts of your terms, refund and privacy policies.</p>
+        </div>
+        <ChoiceChips name="refunds" legend="Do you give refunds?" options={REFUND_OPTIONS} value={answers.refunds || null} onChange={(refunds) => setAnswers({ ...answers, refunds })} />
+        <ChoiceChips name="access" legend="How long can buyers use what they buy?" options={ACCESS_OPTIONS} value={answers.access || null} onChange={(access) => setAnswers({ ...answers, access })} />
+        <Field label="How can buyers contact you?" htmlFor={contactId}>
+          <Input
             id={contactId}
             value={answers.contact}
             onChange={(e) => setAnswers({ ...answers, contact: e.target.value })}
             maxLength={LIMITS.policyAnswer}
             placeholder="Email or WhatsApp number"
             autoCapitalize="none"
-            className="h-12 rounded-xl border border-zinc-300 px-3 text-base"
           />
-        </div>
-        <button type="button" onClick={makePolicies} disabled={!ready || policyBusy} className={primary}>
+        </Field>
+        <Button variant="ai" size="lg" icon={<Sparkles aria-hidden />} onClick={makePolicies} disabled={!ready && !policyBusy} loading={policyBusy} className="w-full">
           {policyBusy ? "Drafting your policies…" : policies ? "Draft them again" : "Draft my policies"}
-        </button>
+        </Button>
         {policyError && (
-          <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          <Callout tone="critical" role="alert">
             {policyError}
-          </p>
+          </Callout>
         )}
         {policies &&
           POLICIES.map(([key, label]) => (
-            <div key={key} className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-3">
-              <p className="flex flex-wrap items-center justify-between gap-2 font-semibold">
-                {label} <Badge>Draft: check before use</Badge>
+            <Card key={key} className="flex flex-col gap-3">
+              <p className="flex flex-wrap items-center justify-between gap-2 text-ui font-semibold text-text-1">
+                {label} <Badge tone="warning">Draft: check before use</Badge>
               </p>
-              <p className="text-sm whitespace-pre-wrap text-zinc-700">{policies[key]}</p>
+              <p className="text-ui whitespace-pre-wrap text-text-2">{policies[key]}</p>
               <CopyButton text={policies[key]} />
-            </div>
+            </Card>
           ))}
       </div>
     </section>
